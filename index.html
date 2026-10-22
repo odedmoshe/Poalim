@@ -1848,8 +1848,17 @@
 
     $('#btn-clear-signature').addEventListener('click', () => { clearSignature(); onStateChanged(); });
     $('#btn-fill-demo').addEventListener('click', fillDemo);
-    $('#btn-reset-form').addEventListener('click', () => {
-      if (!confirm('לאפס את כל הטופס ולמחוק את הטיוטה השמורה במכשיר?')) return;
+    // אישור בלחיצה שנייה (חלונות confirm() חסומים בחלק מהדפדפנים המוטמעים)
+    let resetArmedTimer = null;
+    $('#btn-reset-form').addEventListener('click', e => {
+      const btn = e.currentTarget;
+      if (!resetArmedTimer) {
+        btn.textContent = 'לחצו שוב לאישור';
+        showToast('לחיצה נוספת על "איפוס" תמחק את כל הטופס ואת הטיוטה השמורה במכשיר.', 'warn');
+        resetArmedTimer = setTimeout(() => { resetArmedTimer = null; btn.textContent = 'איפוס'; }, 4000);
+        return;
+      }
+      clearTimeout(resetArmedTimer); resetArmedTimer = null; btn.textContent = 'איפוס';
       resetForm(); onStateChanged(); setStep(1);
       showToast('הטופס אופס והטיוטה נמחקה.', 'info');
     });
