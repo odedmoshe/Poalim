@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="מערכת עזר טכנולוגית לעובדי בנק הפועלים – הפקת מכתב התרעה משפטי אישי, חתום ומנומק בנושא עומסים, פגיעה בבריאות והפרת חוקי מגן.">
+  <meta name="theme-color" content="#0f2042">
+  <meta name="format-detection" content="telephone=no">
+  <title>מחולל מכתבי התרעה משפטיים אישיים – עובדי בנק הפועלים</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f2042'/%3E%3Cpath d='M32 12v38M18 50h28M14 22h36M20 22l-8 16h16zM44 22l-8 16h16z' stroke='%23fff' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=David+Libre:wght@400;500;700&family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            ui: ['Heebo', 'Assistant', 'system-ui', 'sans-serif'],
+            legal: ['"Frank Ruhl Libre"', '"David Libre"', 'serif']
+          },
+          colors: {
+            navy: { 900: '#0f2042', 800: '#152c57', 700: '#1e3a70' },
+            crimson: { 700: '#b91c1c', 600: '#dc2626' }
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { max-width: 100vw; width: 100%; overflow-x: hidden; }
+    body {
+      margin: 0;
+      background: #f8fafc;
+      color: #0f172a;
+      font-family: 'Heebo', 'Assistant', system-ui, sans-serif;
+      -webkit-text-size-adjust: 100%;
+    }
+    [hidden] { display: none !important; }
+
+    /* ---------- שדות טופס ---------- */
+    .field {
+      width: 100%; max-width: 100%;
+      border: 1px solid #cbd5e1; border-radius: 10px;
+      background: #fff; padding: 9px 11px;
+      font: inherit; font-size: 15px; color: #0f172a;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field:focus { outline: none; border-color: #152c57; box-shadow: 0 0 0 3px rgba(21, 44, 87, .15); }
+    .field.is-invalid { border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220, 38, 38, .12); }
+    .field-label { display: block; font-size: 13px; font-weight: 600; color: #152c57; margin-bottom: 4px; }
+    .field-hint { display: block; font-size: 11.5px; color: #64748b; margin-top: 3px; }
+    .req { color: #dc2626; }
+    input[type="checkbox"] { accent-color: #0f2042; }
+    .ltr { direction: ltr; unicode-bidi: isolate; }
+
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; }
+    .item-card { transition: border-color .15s, background-color .15s; }
+    .item-card.is-checked { border-color: #152c57; background: #f5f8ff; }
+    .item-card details summary { cursor: pointer; list-style: none; }
+    .item-card details summary::-webkit-details-marker { display: none; }
+
+    /* ---------- סרגל שלבים ---------- */
+    .step-btn { min-width: 0; border-radius: 10px; transition: background-color .15s, color .15s; }
+    .step-btn .step-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      background: #e2e8f0; color: #152c57; flex-shrink: 0;
+    }
+    .step-btn.is-active { background: #0f2042; color: #fff; }
+    .step-btn.is-active .step-num { background: #fff; color: #0f2042; }
+    .step-btn.is-done .step-num { background: #16a34a; color: #fff; }
+
+    /* ---------- כפתורים ---------- */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      border-radius: 11px; padding: 10px 14px; font-weight: 700; font-size: 14px;
+      border: 1px solid transparent; cursor: pointer; text-decoration: none;
+      transition: transform .05s, background-color .15s, box-shadow .15s; user-select: none;
+      -webkit-tap-highlight-color: transparent; text-align: center;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn[disabled] { opacity: .55; cursor: not-allowed; }
+    .btn-navy { background: #0f2042; color: #fff; }
+    .btn-navy:hover { background: #152c57; }
+    .btn-crimson { background: #b91c1c; color: #fff; }
+    .btn-crimson:hover { background: #dc2626; }
+    .btn-outline { background: #fff; color: #0f2042; border-color: #cbd5e1; }
+    .btn-outline:hover { border-color: #0f2042; }
+    .btn-ghost { background: transparent; color: #152c57; }
+    .btn-sm { padding: 6px 10px; font-size: 12.5px; border-radius: 9px; }
+
+    .dispatch-btn {
+      display: flex; align-items: flex-start; gap: 10px; text-align: right; width: 100%;
+      padding: 12px; border-radius: 14px; border: 1px solid #e2e8f0; background: #fff;
+      text-decoration: none; color: #0f172a; cursor: pointer; min-width: 0;
+      transition: border-color .15s, box-shadow .15s, transform .05s;
+    }
+    .dispatch-btn:hover { border-color: #152c57; box-shadow: 0 4px 14px rgba(15, 32, 66, .08); }
+    .dispatch-btn:active { transform: scale(.99); }
+    .dispatch-btn .ico { font-size: 22px; line-height: 1; flex-shrink: 0; }
+    .dispatch-btn .ttl { display: block; font-weight: 700; font-size: 14px; color: #0f2042; }
+    .dispatch-btn .sub { display: block; font-size: 11.5px; color: #64748b; margin-top: 2px; line-height: 1.45; }
+    .dispatch-btn.primary { border-color: #0f2042; background: linear-gradient(180deg, #f5f8ff, #fff); }
+    .dispatch-btn.danger { border-color: #fecaca; background: linear-gradient(180deg, #fff5f5, #fff); }
+    .dispatch-btn.danger .ttl { color: #b91c1c; }
+
+    /* ---------- משטח חתימה ---------- */
+    #signature-canvas {
+      display: block; width: 100%; max-width: 460px; height: auto; aspect-ratio: 460 / 140;
+      background: #fff; border: 2px dashed #94a3b8; border-radius: 12px;
+      touch-action: none; cursor: crosshair;
+      background-image: linear-gradient(to top, transparent 0, transparent 30px, #cbd5e1 30px, #cbd5e1 31px, transparent 31px);
+    }
+
+    /* ---------- מסמך A4 משפטי ---------- */
+    .paper-sheet {
+      width: 100%; max-width: 794px; margin: 0 auto; background: #fff;
+      border: 1px solid #e2e8f0; border-radius: 6px;
+      box-shadow: 0 10px 30px rgba(15, 32, 66, .10);
+      padding: 22px 16px;
+    }
+    @media (min-width: 640px) { .paper-sheet { padding: 48px 56px; } }
+    /* שכבת ההפקה של html2pdf אינה חוסמת לחיצות */
+    .html2pdf__overlay { pointer-events: none !important; }
+
+    /* ---------- חלונית השיגור ---------- */
+    #dispatch-hub-modal { position: fixed; inset: 0; z-index: 1200; display: flex; align-items: flex-end; justify-content: center; }
+    @media (min-width: 640px) { #dispatch-hub-modal { align-items: center; padding: 20px; } }
+    #dispatch-hub-modal .hub-backdrop { position: absolute; inset: 0; background: rgba(15, 23, 42, .55); }
+    #dispatch-hub-modal .hub-panel {
+      position: relative; width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto; overflow-x: hidden;
+      background: #fff; border-radius: 18px 18px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, .25);
+    }
+    @media (min-width: 640px) { #dispatch-hub-modal .hub-panel { border-radius: 18px; } }
+    .hub-status { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px; font-size: 14px; line-height: 1.5; }
+    .hub-status.info { background: #eff6ff; color: #1e3a8a; }
+    .hub-status.ok { background: #f0fdf4; color: #166534; }
+    .hub-status.warn { background: #fffbeb; color: #92400e; }
+    .hub-status.error { background: #fef2f2; color: #991b1b; }
+    .spinner { width: 18px; height: 18px; border: 2.5px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; flex-shrink: 0; margin-top: 1px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #dispatch-preview-img { display: block; width: 100%; height: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; -webkit-touch-callout: default; }
+    .hub-img-wrap { max-height: 420px; overflow-y: auto; overflow-x: hidden; border-radius: 10px; background: #f1f5f9; padding: 6px; }
+
+    /* ---------- הדפסה ---------- */
+    @media print {
+      body * { visibility: hidden !important; }
+      #legal-document, #legal-document * { visibility: visible !important; }
+      #legal-document { position: absolute; inset: 0 auto auto 0; width: 100%; box-shadow: none; border: 0; padding: 0; }
+      @page { size: A4; margin: 16mm 14mm; }
+    }
+  </style>
+  <style id="letter-styles">
+    /* ---------- מסמך A4 משפטי (משמש גם להפקת ה-PDF) ---------- */
+    .legal-paper {
+      font-family: 'Frank Ruhl Libre', 'David Libre', 'David', serif;
+      font-size: 15.5px; line-height: 1.68; text-align: justify; color: #111827;
+      direction: rtl; overflow-wrap: anywhere; word-break: normal;
+    }
+    .legal-paper p { margin: 0 0 8px; }
+    .legal-paper .lp-meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; color: #334155; margin-bottom: 14px; }
+    .legal-paper .lp-tag { font-weight: 700; color: #b91c1c; letter-spacing: .3px; }
+    .legal-paper .lp-label { font-weight: 700; margin: 10px 0 4px; color: #0f2042; }
+    .legal-paper ol.lp-addressees { margin: 0 0 6px; padding: 0 22px 0 0; text-align: right; }
+    .legal-paper ol.lp-addressees li { margin-bottom: 3px; font-size: 14.5px; line-height: 1.55; }
+    .legal-paper .lp-subject {
+      margin: 18px 0 16px; padding: 10px 12px; border-top: 2px solid #0f2042; border-bottom: 2px solid #0f2042;
+      font-weight: 700; text-align: center; color: #0f2042; font-size: 16.5px; line-height: 1.55;
+    }
+    .legal-paper .lp-subject u { text-underline-offset: 4px; }
+    .legal-paper h3 {
+      font-size: 17px; font-weight: 700; color: #0f2042; margin: 20px 0 10px; padding-bottom: 4px;
+      border-bottom: 2px solid #0f2042; text-align: right; line-height: 1.45;
+    }
+    .legal-paper .lp-item { margin: 0 0 9px; }
+    .legal-paper .lp-num { font-weight: 700; color: #0f2042; margin-left: 4px; }
+    .legal-paper .lp-item-title { font-weight: 700; }
+    .legal-paper .lp-warning { border-right: 4px solid #b91c1c; background: #fff7f7; padding: 8px 12px; margin: 12px 0; }
+    .legal-paper .lp-empty { color: #94a3b8; font-style: italic; }
+    .legal-paper .lp-signature { margin-top: 26px; text-align: right; }
+    .legal-paper .lp-signature img { display: block; max-width: 230px; height: auto; margin: 4px 0 -4px; }
+    .legal-paper .lp-signature .sig-line { width: 230px; max-width: 100%; border-top: 1px solid #0f172a; margin-top: 2px; padding-top: 4px; }
+    .legal-paper .lp-signature .sig-missing { color: #b91c1c; font-size: 13px; }
+    .legal-paper .lp-footnote { margin-top: 22px; font-size: 11.5px; color: #64748b; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 6px; }
+    .legal-paper.pdf-mode { padding: 0; }
+    .legal-paper > :first-child { margin-top: 0; }
+    .legal-paper.pdf-mode .lp-subject { font-size: 16px; }
+
+  </style>
+</head>
+<body class="font-ui antialiased">
+
+  <!-- הודעות חיווי -->
+  <div id="toast-notification" role="status" aria-live="polite"
+       class="fixed top-3 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-sm z-[1300] hidden">
+    <div class="flex items-start gap-3 rounded-xl px-4 py-3 shadow-lg text-sm font-medium text-white bg-navy-900" id="toast-body">
+      <span id="toast-message" class="flex-1 min-w-0 leading-relaxed"></span>
+      <button type="button" id="toast-close" class="shrink-0 text-white/80 hover:text-white text-base leading-none" aria-label="סגירה">✕</button>
+    </div>
+  </div>
+
+  <!-- חלק עליון קומפקטי -->
+  <header class="w-full max-w-full">
+    <div class="bg-navy-900 text-white text-center text-[10.5px] sm:text-xs py-1 px-2 leading-snug">
+      מערכת עזר משפטית לעובדי בנק הפועלים – תיעוד עומסים, פגיעות בריאותיות והפרות חוקי מגן
+    </div>
+    <div class="bg-white border-b border-slate-200">
+      <div class="max-w-5xl mx-auto px-3 py-2 sm:py-3 flex items-center gap-2 sm:gap-3">
+        <div class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-navy-900 text-white flex items-center justify-center" aria-hidden="true">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v17M7 20h10M4 7h16M7 7l-3 6h6zM17 7l-3 6h6z"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h1 class="text-[15px] sm:text-lg font-extrabold text-navy-900 leading-tight truncate">מחולל מכתבי התרעה משפטיים אישיים</h1>
+          <div id="autosave-indicator" class="text-[10.5px] sm:text-[11px] text-slate-500 leading-tight truncate">טיוטה תישמר אוטומטית במכשיר זה בלבד</div>
+        </div>
+        <button type="button" id="btn-fill-demo" class="btn btn-outline btn-sm shrink-0">מילוי נתוני דוגמה</button>
+        <button type="button" id="btn-reset-form" class="btn btn-ghost btn-sm shrink-0 text-crimson-700">איפוס</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- סרגל שלבים דביק -->
+  <nav id="stepper-nav" class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm" aria-label="שלבי האשף">
+    <div class="max-w-5xl mx-auto grid grid-cols-5 gap-1 p-1 sm:p-2">
+      <button type="button" class="step-btn flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 py-1 px-0.5 text-slate-600" data-step="1"><span class="step-num">1</span><span class="text-[10px] sm:text-xs font-semibold leading-tight text-center">פרטים אישיים</span></button>
+      <button type="button" class="step-btn flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 py-1 px-0.5 text-slate-600" data-step="2"><span class="step-num">2</span><span class="text-[10px] sm:text-xs font-semibold leading-tight text-center">מכותבים</span></button>
+      <button type="button" class="step-btn flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 py-1 px-0.5 text-slate-600" data-step="3"><span class="step-num">3</span><span class="text-[10px] sm:text-xs font-semibold leading-tight text-center">עומסים ופגיעה בתנאים</span></button>
+      <button type="button" class="step-btn flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 py-1 px-0.5 text-slate-600" data-step="4"><span class="step-num">4</span><span class="text-[10px] sm:text-xs font-semibold leading-tight text-center">בריאות, נפש וגוף</span></button>
+      <button type="button" class="step-btn flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 py-1 px-0.5 text-slate-600" data-step="5"><span class="step-num">5</span><span class="text-[10px] sm:text-xs font-semibold leading-tight text-center">הפקה והורדה</span></button>
+    </div>
+  </nav>
+
+  <main id="wizard" class="max-w-5xl mx-auto w-full max-w-full px-3 sm:px-4 py-4">
+
+    <!-- ===================== שלב 1 ===================== -->
+    <section id="step-1" data-step-panel="1" class="w-full max-w-full overflow-hidden space-y-4">
+      <div>
+        <h2 class="text-lg sm:text-xl font-extrabold text-navy-900">שלב 1 · פרטים אישיים וחתימה</h2>
+        <p class="text-sm text-slate-600 mt-1">הפרטים ישמשו לפתיח המכתב ולגוש החתימה. הנתונים נשמרים במכשירך בלבד.</p>
+      </div>
+
+      <div class="card p-3 sm:p-5 w-full max-w-full overflow-hidden">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div class="min-w-0">
+            <label class="field-label" for="input-fullName">שם מלא <span class="req">*</span></label>
+            <input id="input-fullName" class="field" type="text" autocomplete="name" placeholder="שם פרטי ושם משפחה" required>
+          </div>
+          <div class="min-w-0">
+            <label class="field-label" for="input-idNumber">מספר תעודת זהות</label>
+            <input id="input-idNumber" class="field" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" autocomplete="off" placeholder="9 ספרות">
+            <span class="field-hint" id="hint-idNumber">9 ספרות כולל ספרת ביקורת</span>
+          </div>
+          <div class="min-w-0">
+            <label class="field-label" for="input-role">תפקיד מדויק בבנק</label>
+            <input id="input-role" class="field" type="text" list="roles-list" placeholder="בחר/י מהרשימה או הקלד/י">
+            <datalist id="roles-list">
+              <option value="בנקאי/ת שירות ומכירה"></option>
+              <option value="בנקאי/ת לקוחות פרטיים"></option>
+              <option value="בנקאי/ת אישית"></option>
+              <option value="בנקאי/ת עסקי/ת"></option>
+              <option value="יועץ/ת השקעות"></option>
+              <option value="בנקאי/ת משכנתאות (משכן)"></option>
+              <option value="בנקאי/ת פלטינום / PRO"></option>
+              <option value="קופאי/ת / טלר/ית"></option>
+              <option value="סגן/ית מנהל סניף / מנהל/ת מחלקה"></option>
+              <option value='נציג/ת מוקד פועלים בטלפון (פב"ט)'></option>
+              <option value='רכז/ת תפעול ובק-אופיס (מת"ב)'></option>
+              <option value="מפתח/ת מערכות / חטיבת טכנולוגיה"></option>
+            </datalist>
+          </div>
+          <div class="min-w-0">
+            <label class="field-label" for="input-district">מחוז / אזור ארגוני</label>
+            <select id="input-district" class="field">
+              <option value="">בחר/י מחוז / אזור</option>
+              <option value="מרכז">מרכז</option>
+              <option value="תל אביב">תל אביב</option>
+              <option value="צפון וחיפה">צפון וחיפה</option>
+              <option value="דרום">דרום</option>
+              <option value="ירושלים">ירושלים</option>
+              <option value="הנהלה ראשית / מטה / טכנולוגיה">הנהלה ראשית / מטה / טכנולוגיה</option>
+              <option value='מוקדים / פב"ט / פרו / מת"ב'>מוקדים / פב"ט / פרו / מת"ב</option>
+            </select>
+          </div>
+          <div class="min-w-0">
+            <label class="field-label" for="input-branchName">שם הסניף / היחידה</label>
+            <input id="input-branchName" class="field" type="text" placeholder="לדוגמה: סניף רמת אביב">
+          </div>
+          <div class="min-w-0">
+            <label class="field-label" for="input-branchNumber">מספר סניף / קוד יחידה</label>
+            <input id="input-branchNumber" class="field" type="text" inputmode="numeric" placeholder="לדוגמה: 612">
+          </div>
+          <div class="min-w-0">
+            <label class="field-label" for="input-seniority">ותק ומעמד העסקה <span class="text-slate-400 font-normal">(אופציונלי)</span></label>
+            <input id="input-seniority" class="field" type="text" placeholder="לדוגמה: 9 שנים (קבוע דור א' / זמני דור ב')">
+          </div>
+          <div class="min-w-0">
+            <label class="field-label" for="input-letterDate">תאריך המכתב</label>
+            <input id="input-letterDate" class="field" type="date">
+          </div>
+          <div class="min-w-0 sm:col-span-2">
+            <label class="field-label" for="input-employeeEmail">דוא"ל אישי לקבלת עותק ותשובות <span class="text-slate-400 font-normal">(אופציונלי)</span></label>
+            <input id="input-employeeEmail" class="field ltr text-right" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com">
+            <span class="field-hint">בשיגור דרך שרת: תוגדר ככתובת למענה (Reply-To), כך שתשובות יגיעו אליך.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- משטח חתימה -->
+      <div class="card p-3 sm:p-5 w-full max-w-full overflow-hidden">
+        <div class="flex items-center justify-between gap-2 flex-wrap mb-2">
+          <div class="min-w-0">
+            <h3 class="font-bold text-navy-900">חתימה דיגיטלית <span class="req">*</span></h3>
+            <p class="text-xs text-slate-500">חתמו באצבע (בנייד) או בעכבר בתוך המסגרת.</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span id="signature-status" class="text-xs font-bold rounded-full px-2.5 py-1 bg-amber-100 text-amber-800">טרם נחתם</span>
+            <button type="button" id="btn-clear-signature" class="btn btn-outline btn-sm">נקה חתימה</button>
+          </div>
+        </div>
+        <canvas id="signature-canvas" width="460" height="140" aria-label="משטח חתימה"></canvas>
+      </div>
+
+      <!-- הצהרת אמת -->
+      <div class="card p-3 sm:p-5 w-full max-w-full overflow-hidden border-crimson-600/40 bg-red-50/40">
+        <h3 class="font-bold text-crimson-700 leading-snug">הצהרת אמת, אחריות אישית של העובד/ת והסרת אחריות מוחלטת מיוצרי האפליקציה</h3>
+        <div class="mt-2 space-y-2 text-[13.5px] leading-relaxed text-slate-700 text-justify">
+          <p><strong>1. חובת אמירת אמת ודיוק עובדתי:</strong> כל עובד/ת אחראי/ת באופן אישי ובלעדי לכך שכל הפרטים, שעות העבודה, האירועים והתסמינים המסומנים או המוקלדים במערכת משקפים אמת עובדתית מלאה, מדויקת ובתום לב מניסיונו/ה האישי בלבד. אין לסמן סעיפים שאינם מתקיימים בפועל בעניינך.</p>
+          <p><strong>2. היעדר ייעוץ משפטי והסרת אחריות מוחלטת:</strong> אפליקציה זו הינה כלי עזר טכנולוגי-טכני להפקת תבנית מכתב בלבד ("As-Is"), ואינה מהווה ייעוץ משפטי, חוות דעת משפטית או תחליף להיוועצות בעורך דין מוסמך. יוצרי האפליקציה ומפתחיה מסירים מעליהם כל אחריות מכל מין וסוג שהוא בגין השימוש במערכת, תוכן המכתב, שליחתו או כל השלכה (תעסוקתית, משפטית, משמעתית או אחרת) הנובעת מכך. כל פעולה וכל השלכה משליחת המכתב הינן על אחריותו/ה הבלעדית והמלאה של המשתמש/ת בלבד.</p>
+        </div>
+        <label class="mt-3 flex items-start gap-3 cursor-pointer rounded-xl bg-white border border-slate-200 p-3">
+          <input type="checkbox" id="chk-disclaimerConfirmed" class="mt-1 h-5 w-5 shrink-0" checked>
+          <span class="flex-1 min-w-0 text-[13.5px] font-semibold text-slate-800 leading-relaxed">קראתי והבנתי: אני מצהיר/ה כי כל הנתונים שאזין הם אמת לאמיתה, ואני נושא/ת באחריות הבלעדית והמלאה להפקת המכתב, לשליחתו ולכל ההשלכות הנובעות מכך.</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- ===================== שלב 2 ===================== -->
+    <section id="step-2" data-step-panel="2" class="w-full max-w-full overflow-hidden space-y-4" hidden>
+      <div>
+        <h2 class="text-lg sm:text-xl font-extrabold text-navy-900">שלב 2 · מכותבים</h2>
+        <p class="text-sm text-slate-600 mt-1">סמנו את הגורמים שאליהם יישלח המכתב. גורמי "אל" מופיעים כנמענים ישירים, ושאר הגורמים בהעתק (CC).</p>
+      </div>
+
+      <div class="card p-3 sm:p-5 w-full max-w-full overflow-hidden">
+        <label class="field-label" for="input-customRecipient">מכותב ישיר נוסף <span class="text-slate-400 font-normal">(אופציונלי – יתווסף בראש רשימת הנמענים)</span></label>
+        <input id="input-customRecipient" class="field" type="text" maxlength="300" placeholder="לדוגמה: מנהל/ת הסניף ומנהל/ת האזור – manager@poalim.co.il, area@poalim.co.il">
+        <span class="field-hint">ניתן לכתוב תיאור חופשי ולצרף כתובת דוא"ל אחת או יותר. הכתובות יזוהו אוטומטית.</span>
+      </div>
+
+      <div id="recipients-list" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
+
+      <div class="card p-3 sm:p-4 w-full max-w-full overflow-hidden bg-slate-50">
+        <div class="text-sm"><span class="font-bold text-navy-900">אל (To):</span> <span id="summary-to" class="ltr break-all text-right text-slate-700 inline-block max-w-full"></span></div>
+        <div class="text-sm mt-1"><span class="font-bold text-navy-900">העתק (CC):</span> <span id="summary-cc" class="ltr break-all text-right text-slate-700 inline-block max-w-full"></span></div>
+      </div>
+    </section>
+
+    <!-- ===================== שלב 3 ===================== -->
+    <section id="step-3" data-step-panel="3" class="w-full max-w-full overflow-hidden space-y-4" hidden>
+      <div>
+        <h2 class="text-lg sm:text-xl font-extrabold text-navy-900">שלב 3 · עומסים, שעות ופגיעה בתנאי העבודה</h2>
+        <p class="text-sm text-slate-600 mt-1">סמנו <strong>רק</strong> את הסעיפים המתקיימים בפועל בעניינכם. הוספת פירוט אישי מחזקת את הערך הראייתי של המכתב.</p>
+      </div>
+      <div id="conditions-list" class="space-y-3"></div>
+    </section>
+
+    <!-- ===================== שלב 4 ===================== -->
+    <section id="step-4" data-step-panel="4" class="w-full max-w-full overflow-hidden space-y-4" hidden>
+      <div>
+        <h2 class="text-lg sm:text-xl font-extrabold text-navy-900">שלב 4 · נזקים בריאותיים, גופניים ונפשיים</h2>
+        <p class="text-sm text-slate-600 mt-1">סמנו את הפגיעות שאתם חווים בפועל. הנוסח המשפטי ייכלל בפרק 3 של המכתב.</p>
+      </div>
+      <div id="health-list" class="space-y-3"></div>
+    </section>
+
+    <!-- ===================== שלב 5 ===================== -->
+    <section id="step-5" data-step-panel="5" class="w-full max-w-full overflow-hidden space-y-4" hidden>
+      <div>
+        <h2 class="text-lg sm:text-xl font-extrabold text-navy-900">שלב 5 · הפקה, הורדה ושיגור</h2>
+        <p class="text-sm text-slate-600 mt-1">בדקו את המכתב, ובחרו את דרך השיגור. כל לחיצה פותחת את חלונית השיגור ומעתיקה את נוסח המכתב ללוח.</p>
+      </div>
+
+      <div id="validation-panel" class="hidden"></div>
+
+      <div class="card p-3 sm:p-4 w-full max-w-full overflow-hidden">
+        <div class="flex items-center justify-between gap-2 flex-wrap mb-3">
+          <h3 class="font-bold text-navy-900">שיגור בלחיצת כפתור</h3>
+          <span id="pdf-ready-indicator" class="text-[11.5px] font-semibold rounded-full px-2.5 py-1 bg-slate-100 text-slate-600">PDF טרם הופק</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <button type="button" class="dispatch-btn primary" data-action="cloud-draft">
+            <span class="ico">📥</span><span class="flex-1 min-w-0"><span class="ttl">צור טיוטה מוכנה ב-Gmail עם ה-PDF המצורף</span><span class="sub">כל הנמענים, הנושא, ההקדמה והמכתב – ממתין לבדיקה ושליחה שלכם</span></span>
+          </button>
+          <button type="button" class="dispatch-btn danger" data-action="cloud-send">
+            <span class="ico">⚡</span><span class="flex-1 min-w-0"><span class="ttl">שלח עכשיו ישירות לכל המכותבים + PDF</span><span class="sub">שיגור אוטומטי מלא מהשרת (יידרש אישור נוסף)</span></span>
+          </button>
+          <button type="button" class="dispatch-btn" data-action="share">
+            <span class="ico">📱</span><span class="flex-1 min-w-0"><span class="ttl">שתף את ה-PDF החתום מהנייד</span><span class="sub">Gmail / WhatsApp / Outlook – הנמענים יועתקו ללוח</span></span>
+          </button>
+          <a class="dispatch-btn" data-action="mailto" id="link-mailto" href="#" target="_top">
+            <span class="ico">✉️</span><span class="flex-1 min-w-0"><span class="ttl">פתח באפליקציית המייל</span><span class="sub">נמענים + נושא + הקדמה מוזנים אוטומטית; המכתב המלא מועתק ללוח</span></span>
+          </a>
+          <a class="dispatch-btn" data-action="intent" id="link-intent" href="#" target="_top">
+            <span class="ico">🤖</span><span class="flex-1 min-w-0"><span class="ttl">Gmail לאנדרואיד</span><span class="sub">פתיחה ישירה של אפליקציית Gmail בטלפון אנדרואיד</span></span>
+          </a>
+          <a class="dispatch-btn" data-action="gmail-web" id="link-gmail-web" href="#" target="_blank" rel="noopener">
+            <span class="ico">💻</span><span class="flex-1 min-w-0"><span class="ttl">Gmail Web (מחשב)</span><span class="sub">חלון כתיבה מלא בדפדפן עם כל הנמענים והנוסח</span></span>
+          </a>
+          <button type="button" class="dispatch-btn" data-action="download-pdf">
+            <span class="ico">⬇️</span><span class="flex-1 min-w-0"><span class="ttl">הורד PDF חתום</span><span class="sub">קובץ A4 רשמי לצירוף ידני או לתיוק</span></span>
+          </button>
+          <button type="button" class="dispatch-btn" data-action="download-word">
+            <span class="ico">📄</span><span class="flex-1 min-w-0"><span class="ttl">הורד קובץ Word</span><span class="sub">מסמך הניתן לעריכה, כולל החתימה</span></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="w-full max-w-full overflow-hidden">
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <h3 class="font-bold text-navy-900">תצוגה מקדימה – מסמך A4</h3>
+          <button type="button" class="btn btn-outline btn-sm" data-action="copy-all">📋 העתק מכתב</button>
+        </div>
+        <div id="legal-document" class="paper-sheet"><div class="legal-paper"></div></div>
+      </div>
+    </section>
+
+    <!-- סרגל סטטוס ופעולות מהירות – בתחתית העמוד -->
+    <div id="bottom-quick-bar" class="mt-6 card p-3 w-full max-w-full overflow-hidden">
+      <div class="flex flex-wrap items-center gap-1.5 text-[11.5px] mb-3" id="quick-status"></div>
+      <div class="flex items-center gap-2">
+        <button type="button" id="btn-prev" class="btn btn-outline flex-1 sm:flex-none sm:min-w-[130px]">→ הקודם</button>
+        <button type="button" id="btn-next" class="btn btn-navy flex-[2] sm:flex-none sm:min-w-[180px]">הבא ←</button>
+      </div>
+    </div>
+
+    <footer class="mt-6 mb-4 text-center text-[11px] text-slate-500 leading-relaxed px-2">
+      מערכת עזר טכנולוגית לעובדי בנק הפועלים · מערכת עצמאית שאינה מטעם בנק הפועלים בע"מ ואינה קשורה אליו ·
+      כלי עזר טכני בלבד שאינו מהווה ייעוץ משפטי · הנתונים נשמרים במכשירך בלבד ונשלחים רק בעת שיגור שתבצעו.
+    </footer>
+  </main>
+
+  <!-- ===================== חלונית שיגור והפקה ===================== -->
+  <div id="dispatch-hub-modal" hidden role="dialog" aria-modal="true" aria-labelledby="hub-title">
+    <div class="hub-backdrop" data-hub-close></div>
+    <div class="hub-panel">
+      <div class="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+        <span id="hub-icon" class="text-xl">📨</span>
+        <h2 id="hub-title" class="flex-1 min-w-0 font-extrabold text-navy-900 leading-tight">חלונית שיגור</h2>
+        <button type="button" class="btn btn-ghost btn-sm text-lg" data-hub-close aria-label="סגירה">✕</button>
+      </div>
+      <div class="p-4 space-y-4">
+        <div id="hub-status" class="hub-status info"><span class="spinner"></span><span id="hub-status-text" class="flex-1 min-w-0">מכין…</span></div>
+
+        <div id="hub-errors" hidden></div>
+
+        <div id="hub-confirm" hidden class="rounded-xl border-2 border-crimson-600 bg-red-50 p-3">
+          <p class="font-bold text-crimson-700">אישור שליחה סופית</p>
+          <p class="text-sm text-slate-700 mt-1 leading-relaxed" id="hub-confirm-text"></p>
+          <div class="flex gap-2 mt-3">
+            <button type="button" id="hub-confirm-send" class="btn btn-crimson flex-1">⚡ אשר ושלח עכשיו</button>
+            <button type="button" id="hub-confirm-cancel" class="btn btn-outline">ביטול</button>
+          </div>
+        </div>
+
+        <div id="hub-primary-actions" class="flex flex-wrap gap-2"></div>
+
+        <div>
+          <p class="text-xs font-bold text-slate-500 mb-1.5">העתקה מהירה בלחיצה אחת</p>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" class="btn btn-outline btn-sm" data-copy="recipients">📋 נמענים</button>
+            <button type="button" class="btn btn-outline btn-sm" data-copy="subject">📋 נושא</button>
+            <button type="button" class="btn btn-outline btn-sm" data-copy="letter">📋 הקדמה + מכתב</button>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs font-bold text-slate-500 mb-1.5">המסמך החתום כתמונה <span class="font-normal">(לחיצה ארוכה בנייד ← "שמור תמונה" / "שתף")</span></p>
+          <div class="hub-img-wrap">
+            <div id="hub-img-placeholder" class="text-center text-sm text-slate-500 py-10">מרנדר את מסמך ה-A4…</div>
+            <img id="dispatch-preview-img" alt="מכתב ההתרעה החתום" hidden>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-xs font-bold text-slate-500 mb-1.5">ערוצי שיגור נוספים</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" class="btn btn-outline btn-sm" data-hub-action="cloud-draft">📥 טיוטה ב-Gmail</button>
+            <button type="button" class="btn btn-outline btn-sm" data-hub-action="share">📱 שיתוף PDF</button>
+            <a class="btn btn-outline btn-sm" id="hub-link-mailto" href="#" target="_top">✉️ אפליקציית מייל</a>
+            <a class="btn btn-outline btn-sm" id="hub-link-intent" href="#" target="_top">🤖 Gmail אנדרואיד</a>
+            <a class="btn btn-outline btn-sm" id="hub-link-gmail-web" href="#" target="_blank" rel="noopener">💻 Gmail Web</a>
+            <button type="button" class="btn btn-outline btn-sm" data-hub-action="download-pdf">⬇️ הורד PDF</button>
+            <button type="button" class="btn btn-outline btn-sm" data-hub-action="download-word">📄 הורד Word</button>
+            <button type="button" class="btn btn-outline btn-sm" data-hub-action="print">🖨️ הדפסה</button>
+          </div>
+        </div>
+
+        <details id="hub-settings" class="rounded-xl border border-slate-200 p-3">
+          <summary class="cursor-pointer font-bold text-sm text-navy-900">⚙️ הגדרות שיגור בענן (Google Apps Script / שרת)</summary>
+          <div class="mt-3 space-y-3 text-sm">
+            <p class="text-slate-600 leading-relaxed text-[13px]">
+              לשיגור אוטומטי עם PDF מצורף יש להדביק כאן את כתובת ה-Web App של סקריפט Google Apps Script <strong>שפרסתם בחשבון ה-Gmail האישי שלכם</strong> (הוראות בקובץ README). המייל יישלח / יישמר כטיוטה מחשבונכם. כאשר האפליקציה מאוחסנת ב-Vercel עם שרת מוגדר, ניתן להשאיר ריק.
+            </p>
+            <div>
+              <label class="field-label" for="input-endpointUrl">כתובת שרת השיגור</label>
+              <input id="input-endpointUrl" class="field ltr text-left" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+            </div>
+            <div>
+              <label class="field-label" for="input-endpointToken">קוד גישה (אם הוגדר בשרת)</label>
+              <input id="input-endpointToken" class="field ltr text-left" type="password" autocomplete="off" placeholder="אופציונלי">
+            </div>
+            <button type="button" id="btn-save-endpoint" class="btn btn-navy btn-sm">שמור הגדרות</button>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  'use strict';
+
+  /* =========================================================================
+     הגדרות
+     ========================================================================= */
+  const STORAGE_KEY = 'poalim_legal_notice_draft_v1';
+  const DISPATCH_SETTINGS_KEY = 'poalim_legal_notice_dispatch_v1';
+  const APP_CONFIG = {
+    // ניתן להטמיע כאן כתובת Web App קבועה של Google Apps Script (ראו README).
+    APPS_SCRIPT_URL: '',
+    // נקודת קצה של שרת Serverless (Vercel) – בשימוש כאשר האתר מאוחסן בשרת.
+    SERVERLESS_URL: '/api/send-notice',
+    MAILTO_MAX_LENGTH: 850,
+    REQUEST_TIMEOUT_MS: 90000
+  };
+
+  const RECIPIENT_DEFINITIONS = [
+    { id: 'hr', type: 'to', label: 'אגף משאבי אנוש ורווחה',
+      title: 'הנהלת בנק הפועלים בע"מ – אגף משאבי אנוש (דוא"ל: mailbox.mashab@poalim.co.il | רווחה: social.mailbox@poalim.co.il)',
+      emails: ['mailbox.mashab@poalim.co.il', 'social.mailbox@poalim.co.il'] },
+    { id: 'safety', type: 'to', label: 'בטיחות וגהות / מינהל הבטיחות ואכיפת חוקי עבודה',
+      title: 'הממונה על בטיחות וגהות תעסוקתית, בנק הפועלים בע"מ / מינהל הבטיחות והבריאות התעסוקתית (דוא"ל: Hezi.Schwartzman@labor.gov.il | אכיפת חוקי עבודה: report.achifa@labor.gov.il)',
+      emails: ['Hezi.Schwartzman@labor.gov.il', 'report.achifa@labor.gov.il'] },
+    { id: 'board', type: 'cc', label: 'דירקטוריון הבנק (באמצעות מזכיר הבנק)',
+      title: 'דירקטוריון בנק הפועלים בע"מ – באמצעות מזכיר הבנק והדירקטוריון (דוא"ל: gilad.bloch@poalim.co.il)',
+      emails: ['gilad.bloch@poalim.co.il'] },
+    { id: 'compliance', type: 'cc', label: 'קצין הציות הראשי',
+      title: 'קצין הציות הראשי, בנק הפועלים בע"מ (דוא"ל לדיווח על הפרות ואי-סדרים: mailbox.report.misconduct@poalim.co.il)',
+      emails: ['mailbox.report.misconduct@poalim.co.il'] },
+    { id: 'boi', type: 'cc', label: 'הפיקוח על הבנקים – בנק ישראל',
+      title: 'הפיקוח על הבנקים, בנק ישראל (פניות הציבור ובקרה: infops@boi.org.il / טופס מקוון באתר בנק ישראל)',
+      emails: ['infops@boi.org.il'] },
+    { id: 'histadrut', type: 'cc', label: 'ההסתדרות – האגף לאיגוד מקצועי',
+      title: 'האגף לאיגוד מקצועי, הסתדרות העובדים הכללית החדשה (דוא"ל: moked@histadrut.org.il | פניות הציבור: pniot-tzibur@histadrut.org.il)',
+      emails: ['moked@histadrut.org.il', 'pniot-tzibur@histadrut.org.il'] },
+    { id: 'union', type: 'cc', label: 'ארגון העובדים – הוועד הארצי',
+      title: 'ארגון עובדי בנק הפועלים – הוועד הארצי (דוא"ל: mailbox.mazkirut-vaad-artzi@poalim.co.il)',
+      emails: ['mailbox.mazkirut-vaad-artzi@poalim.co.il'] }
+  ];
+
+  // x = פירוט אישי בסוגריים (או מחרוזת ריקה כשלא הוזן פירוט)
+  const CONDITION_ITEMS = [
+    { id: 'earlyArrival', detailId: 'earlyArrivalText',
+      placeholder: 'לדוגמה: התייצבות קבועה בשעה 07:30, כ-45 דקות לפני תחילת המשמרת',
+      title: 'דרישה ואילוץ להגעה מוקדמת בטרם תחילת המשמרת:',
+      text: x => `עקב היקף המשימות הבלתי אפשרי והלחץ התפעולי השוטף, הנני נאלץ/ת להתייצב בעבודה בשעות מוקדמות במיוחד${x}, וזאת כתנאי הכרחי להסדרת תפקוד הסניף/היחידה בטרם פתיחת השירות.` },
+    { id: 'overtime', detailId: 'overtimeText',
+      placeholder: 'לדוגמה: סיום יום עבודה קבוע ב-19:00, כ-12 שעות ביום פיצול',
+      title: 'עבודה בשעות נוספות מרובות, פיצולים מתישים וחריגה מתקרת השעות המותרת בחוק:',
+      text: x => `בפועל, ימי העבודה שלי מתארכים באופן כרוני הרבה מעבר לשעות העבודה הרשמיות${x}, תוך חריגה מהוראות חוק שעות עבודה ומנוחה, התשי"א-1951 ומההיתר הכללי להעבדה בשעות נוספות, ותוך פגיעה בזמני המנוחה היומיים והשבועיים הקבועים בחוקי המגן.` },
+    { id: 'clusterDutyOverload', detailId: 'clusterDutyOverloadDetail',
+      placeholder: 'לדוגמה: תורנות אשכול ל-5 סניפים, 3 "ימים אדומים" בחודש',
+      title: 'הרחבת תורנויות אשכול קיצונית (תורן אחד ל-4 עד 6 סניפים) וריבוי "ימים אדומים":',
+      text: x => `בעקבות צמצום האשכולות וכוח האדם, הוטלה מתכונת תורנויות בלתי סבירה שבה עובד תורן בודד נדרש לתת מענה למספר רב של סניפים במקביל ולטפל לבדו בממסרונים, בקרות אשראי ועשרות פניות אוטומטיות המוזרמות מהמוקדים ומהטלפוניה החכמה, וכן עבודה במשמרות מאוחרות ו"ימים אדומים" מרובים${x}.` },
+    { id: 'staffCollapse', detailId: 'staffCollapseDetail',
+      placeholder: 'לדוגמה: 4 תקנים חסרים מתוך 11 בשנה האחרונה',
+      title: 'קריסת מצבת כוח האדם ביחידה בעקבות גלי פרישה והתפטרויות ללא איוש תקנים:',
+      text: x => `היחידה פועלת תחת מחסור חמור ומתמשך בתקני כוח אדם פעילים${x}. למרות עזיבת עובדים בפרישה מוקדמת, התפטרויות עקב עומס וחופשות לידה, הבנק נמנע מאיוש התקנים שהתפנו ומותיר את העובדים הנותרים בחזית בלתי אפשרית.` },
+    { id: 'doubleWorkload', detailId: 'doubleWorkloadDetail',
+      placeholder: 'לדוגמה: טיפול בתיק לקוחות של 2 בנקאים שעזבו',
+      title: 'הכפלת נפח המשימות והיעדים האישיים תחת מחסור בכוח אדם:',
+      text: x => `כתוצאה ישירה מהמחסור בכוח אדם, הוכפל נפח המשימות השוטפות המוטל על כתפיי${x}, לרבות ספיגת מטלות של עובדים חסרים ודרישה לעמוד ביעדים כמותיים ושיווקיים (אשראי, גיוסים, כרטיסים ופעילויות מוגברות) המנותקים לחלוטין ממצבת העובדים בפועל.` },
+    { id: 'clientViolence', detailId: 'clientViolenceDetail',
+      placeholder: 'לדוגמה: אירוע איום מפורש מצד לקוח בחודש האחרון',
+      title: 'חשיפה לאלימות פרונטלית, קללות ואיומים מצד לקוחות בהיעדר אבטחה בסניף:',
+      text: x => `מדיניות צמצום כוח האדם, סגירת הקופות והתקלות הטכנולוגיות גורמות להמתנת לקוחות ממושכת בתורים ולהתפרצויות זעם קשות. העובדים בחזית חשופים לאלימות מילולית ופיזית, קללות ואיומים מפורשים על חייהם, וזאת כאשר הבנק צמצם והסיר את נוכחות המאבטחים בסניפים ואינו מספק הגנה פיזית או תוספת סיכון${x}.` },
+    { id: 'wartimeHazard', detailId: 'wartimeHazardDetail',
+      placeholder: 'לדוגמה: חיוב ימי חופשה בזמן סגירת מוסדות החינוך',
+      title: 'סיכון חיי עובדים בחירום/מלחמה, כפיית הגעה תחת אש ופגיעה בהורים לילדים קטנים:',
+      text: x => `בתקופות לחימה וחירום ביטחוני, הבנק כופה הגעה פיזית לסניפים וליחידות המטה/הנה"ר ומתעקש על קיום ימי פיצול גם תחת מטחי טילים ויירוטים ובהיעדר מרחב מוגן בצירי הנסיעה. בנוסף, מופעל לחץ פסול על הורים לילדים מתחת לגיל 14 ובני זוג של משרתי מילואים/ביטחון לדווח ימי חופשה על חשבונם או שנשללת מהם השלמת שעות תקן ("השלמת משא״ב 6860") בעבודה מהבית${x}.` },
+    { id: 'forcedQuota5', detailId: 'forcedQuota5Detail',
+      placeholder: 'לדוגמה: סומנתי כ"טעון/ת שיפור" למרות הערכות קודמות גבוהות',
+      title: 'הנחיה מערכתית פסולה לסימון מכסה כפויה של 5% מהעובדים כ"טעוני שיפור" ("מגשימים"):',
+      text: x => `הנהלת הבנק הנהיגה מדיניות כוחנית המחייבת סימון אחוז קבוע מראש (5%) מהעובדים כ"טעוני שיפור" בהליך ההערכה השנתי, ללא קשר לתפקודם המקצועי האובייקטיבי. מהלך זה פוגע אנושות בשכר העידוד (הבונוס) המהווה חלק אינטגרלי מפרנסת העובד, ומשמש ככלי מלאכותי להתעמרות, ניוד כפוי ודחיקת עובדים קבועים ומוערכים מהמערכת${x}.` },
+    { id: 'physicalErgonomicAbuse', detailId: 'physicalErgonomicAbuseDetail',
+      placeholder: 'לדוגמה: הועברתי לקופה למרות מגבלה רפואית בגב',
+      title: 'פגיעה פיזית וארגונומית ושיבוץ כפוי בתפקידים שוחקים כאמצעי התשה:',
+      text: x => `במסגרת לחצי ההתייעלות ומחסור בכוח אדם, עובדים ותיקים ומנוסים מועברים באופן חד-צדדי לתפקידי קופה וטיפול במזומן או נדרשים להרים שקי מעות ומשאות כבדים בסניפים ללא התאמה ארגונומית או רפואית, באופן הפוגע בבריאותם הפיזית ובמעמדם המקצועי${x}.` },
+    { id: 'noBreaks',
+      title: 'שלילת הפסקות חובה, ניטור דרקוני ("שעון לפיפי") ופגיעה בצרכים פיזיולוגיים בסיסיים:',
+      text: () => 'בניגוד מוחלט להוראות הקוגנטיות של סעיף 20 לחוק שעות עבודה ומנוחה, התשי"א-1951, נמנעת ממני בפועל האפשרות לצאת להפסקת מנוחה וארוחה רצופה במהלך יום העבודה, ובמוקדים מופעלת מדידת זמנים דרקונית בסטופר לכל יציאה לשירותים, שתיית מים או הפוגה קצרה.' },
+    { id: 'multitasking',
+      title: 'ריבוי משימות קיצוני (Multi-tasking) ויצירת חשיפה לסיכון תפעולי ורגולטורי:',
+      text: () => 'הנני נדרש/ת לבצע מספר רב של פעולות בנקאיות מורכבות במקביל – מענה פרונטלי וטלפוני, טיפול בפניות ממוחשבות, בקרות ציות ואישורים תפעוליים תחת לחץ זמן קיצוני. מציאות זו יוצרת סיכון תפעולי מובנה לטעויות אנוש בתום לב, שהאחריות להן רובצת לפתחה של הנהלת הבנק בלבד.' },
+    { id: 'systemFailures', detailId: 'systemFailuresDetail',
+      placeholder: 'לדוגמה: קריסות יומיות של מערכת "דיאלוג" בשעות העומס',
+      title: 'תקלות מערכתיות וטכנולוגיות בלתי פוסקות במערכות הבנק:',
+      text: x => `עבודתי השוטפת משובשת באופן יומיומי עקב תקלות חוזרות ונשנות במערכות המחשוב והתפעול של הבנק, לרבות מערכות "דיאלוג", "נתיב", "מסילה", מערכות פתיחת חשבון ומכשירי הבנקט${x}. תקלות אלו גורמות לעיכובים חמורים במתן השירות ולהתפרצויות זעם של לקוחות כלפי העובדים בחזית.` },
+    { id: 'npsAndWorkflowChaos',
+      title: 'כאוס תפעולי בין יחידות (סניפים, מת"ב, פב"ט ופרו) והטלת אשמת השירות על העובד בסקרי NPS:',
+      text: () => 'העברת משימות דו-כיוונית בלתי מבוקרת בין הסניפים למת"ב ולמוקדים במקביל לקיצוץ תקנים, ושיוך לקוחות ליחידות מרוחקות ללא תיאום, יוצרים צווארי בקבוק קשים. חרף אחריות ההנהלה לכשלים אלו, העובדים נמדדים ונענשים בסקרי שביעות רצון הלקוחות (NPS) בגין תורים וכשלים מערכתיים שאינם בשליטתם.' },
+    { id: 'roleFreezeAndForcedTransfer', detailId: 'roleFreezeAndForcedTransferDetail',
+      placeholder: 'לדוגמה: נבחרתי לתפקיד חדש לפני 6 חודשים ועדיין מעוכב/ת',
+      title: 'איחוד תפקידים ללא תגמול, עוצר מעברים וקידומים, ניוד כפוי והעסקה פוגענית במעמד "זמני":',
+      text: x => `הבנק מרחיב ומאחד תחומי אחריות וניהול ללא כל עדכון בשכר הבסיס או בדרגה, מטיל "עוצר מעברים" חודשים ארוכים על עובדים שכבר נבחרו לתפקידים חדשים, מחזיק עובדים מסורים במעמד "זמני" ("דור ב'") במשך שנים ללא אופק קביעות, ומקדם מהלכים לניוד כפוי ללא הגבלת מרחק ולשחיקת רכיבי השכר והפרישה${x}.` },
+    { id: 'hygieneAndSuppliesCut',
+      title: 'פגיעה בתנאי תברואה וניקיון, קיצוץ בציוד עבודה בסיסי ונתק במענה משאבי אנוש ושכר:',
+      text: () => 'קיצוץ תדירות הניקיון בסניפים עד כדי היעדר ניקיון במשך ימים שלמים, הקצבת נייר מדפסות וטונרים, גריעת מדפסות ומכשירי בנקט, קיצוץ תקציב המטבחון הבסיסי לעובדים, וביטול המענה הטלפוני האנושי במשאבי אנוש ובחילן (הגורם לעיכוב של שבועות בטיפול בפניות שכר וזכויות רפואיות/סוציאליות).' }
+  ];
+  // מיקום שורות השעות הדינמיות – אחרי סעיף תורנויות האשכול
+  const CUSTOM_LOGS_AFTER = 'clusterDutyOverload';
+
+  const HEALTH_ITEMS = [
+    { id: 'burnout', label: 'שחיקה תעסוקתית קיצונית (Burnout), תשישות מתמשכת והפרעות שינה',
+      text: () => 'כתוצאה ישירה, מובהקת ובלתי נמנעת מתנאי ההעסקה הפוגעניים המתוארים לעיל, הנני חווה תסמינים חמורים של שחיקה תעסוקתית קיצונית (Occupational Burnout), המתבטאים בתשישות פיזית ונפשית מתמשכת, אפיסת כוחות בסיום יום העבודה, מתח שרירי והפרעות שינה.' },
+    { id: 'acutePhysicalSymptoms', label: 'תסמינים גופניים אקוטיים במהלך המשמרת (בחילות, כאבי ראש, דופק מואץ, סחרחורות)',
+      text: () => 'במהלך ימי העבודה בסניף/ביחידה הנני סובל/ת מתסמינים גופניים אקוטיים הנובעים ישירות מעוצמת הלחץ והעומס, לרבות בחילות מרוב עומס, כאבי ראש עזים ("ראש מתפוצץ"), דופק מואץ, סחרחורות ותחושת קריסה פיזית ממשית במהלך המשמרת.' },
+    { id: 'severeStressIllness', detailId: 'severeStressIllnessDetail', label: 'תחלואה פיזית מבוססת-סטרס והחמרת מדדים רפואיים',
+      placeholder: 'לדוגמה: אובחן אצלי יתר לחץ דם במהלך השנה האחרונה',
+      text: x => `החשיפה המתמשכת לסטרס תעסוקתי קיצוני ולתנאי עבודה לא מותאמים גורמת לתחלואה פיזית ממשית ולהחמרת מדדים רפואיים – תופעה הרווחת בקרב מאות עובדים בבנק הסובלים מאירועי לב, יתר לחץ דם, התפרצות מחלות אוטואימוניות מבוססות-סטרס ופגיעות אורתופדיות/גב קשות${x}.` },
+    { id: 'medicalCare', label: 'פנייה לטיפול רפואי, טיפול תרופתי או ניצול ימי מחלה בשל העומס',
+      text: () => 'הדרדרות זו במצבי הבריאותי אילצה אותי לפנות לקבלת טיפול וייעוץ רפואי, להסתייע בטיפול תרופתי ו/או לנצל ימי מחלה לצורך התאוששות מנזקי העומס התעסוקתי החריג בסניף/ביחידה.' },
+    { id: 'occupationalDoctorAbuse', label: 'התנהלות דורסנית של רופאים תעסוקתיים מטעם הבנק ופגיעה בדמי מחלה',
+      text: () => 'חמור מכך, עובדים הנזקקים להקלות רפואיות נתקלים בהתנהלות דורסנית מול רופאים תעסוקתיים מטעם הבנק המבטלים באופן גורף המלצות של רופאים מומחים וקובעים כשירות לעבודה מלאה ופיצולים של עד 12 שעות, לצד ניסיונות לפגוע בתשלום דמי מחלה מהיום הראשון באופן המרתיע עובדים ממימוש זכותם הבסיסית להחלים.' },
+    { id: 'anxietyAndFear', label: 'חרדה קיומית וכלכלית, אווירת פחד והשתקת עובדים',
+      text: () => 'לצד הפגיעה הגופנית, התנהלות ההנהלה – לרבות איומי הסימון במכסת ה-5%, השחיקה הכלכלית בתלוש השכר, והשתקת קולם של העובדים באמצעות חסימת ומחיקת תגובות בפורטל הארגוני ולחצים לסגירת קבוצות שיח – יוצרת חרדה קיומית וכלכלית מתמדת ואווירת פחד הפוגעת בכבוד האדם ובחופש הביטוי וההתארגנות.' },
+    { id: 'mentalPeace', label: 'פגיעה בשלווה הנפשית, ברווחה האישית ובתפקוד המשפחתי וההורי',
+      text: () => 'הלחץ הבלתי פוסק, העבודה ללא הפסקות והחיכוך היומיומי עם לקוחות זועמים על רקע מחסור בכוח אדם ותקלות מערכתיות, גורמים לפגיעה קשה בשלוותי הנפשית, ברווחתי האישית ובתפקודי המשפחתי וההורי גם מחוץ לשעות העבודה.' }
+  ];
+
+  const CHAPTER_1 = [
+    '1.1. על פי פסיקת בתי הדין לעבודה ובית המשפט העליון, חלה על הבנק כמעסיק חובת זהירות מושגית וקונקרטית מוגברת כלפי עובדיו, מכוח סעיפים 35–36 לפקודת הנזיקין [נוסח חדש], פקודת הבטיחות בעבודה [נוסח חדש], התש"ל-1970, וחוק ארגון הפיקוח על העבודה, התשי"ד-1954. חובה זו מחייבת את המעסיק להנהיג סביבת עבודה בטוחה, מוגנת מאלימות ובריאה, לספק תקינת כוח אדם הולמת וכלי עבודה תקינים, ולנקוט אמצעים אקטיביים למניעת סיכונים פיזיים ופסיכו-סוציאליים (לרבות שחיקה תעסוקתית, תחלואה מבוססת-סטרס ונזקים נפשיים) הצפויים כתוצאה מעומס עבודה קיצוני.',
+    '1.2. בנוסף, הוראות חוק שעות עבודה ומנוחה, התשי"א-1951 (לרבות סעיפים 2, 6, 16 ו-20 לחוק), חוק הגנת השכר, התשי"ח-1958, חוק דמי מחלה, התשל"ו-1976 וחוק הגנה על עובדים בשעת חירום, התשס"ו-2006 הן הוראות חוק קוגנטיות (חוקי מגן) שאין להתנות עליהן ואין לעקוף אותן, בין במישרין ובין בעקיפין באמצעות הצבת יעדים ומשימות המחייבים הגעה מוקדמת, הישארות בשעות נוספות חורגות, שלילת הפסקות מנוחה או פגיעה בזכויות הורים ועובדים במצב חירום ביטחוני.',
+    '1.3. זאת ועוד, הלכות בית הדין הארצי לעבודה קובעות כי חובת תום הלב וההגינות המוגברת ביחסי עבודה אוסרת על מעסיק להטיל על כתפי העובד את תוצאות מחדליו הניהוליים, לקבוע מכסות שרירותיות וקבועות מראש של "טעוני שיפור", לפגוע בעובדים מטעמים הקשורים בחופש ההתאגדות או הביטוי, או להעסיק עובד בתנאים של התעמרות ושחיקה הפוגעים בכבודו ובבריאותו.'
+  ];
+  const CHAPTER_3_CLOSING = [
+    'הנני להבהיר ולהתריע באופן חד-משמעי כי קיים קשר סיבתי ישיר ומלא בין תנאי ההעסקה הקיצוניים והמחדלים הניהוליים של הבנק לבין הפגיעה בבריאותי הפיזית והנפשית. כל החמרה נוספת במצבי הרפואי, הפיזי או הנפשי תעמוד לאחריותו המשפטית והנזיקית המלאה של בנק הפועלים ונושאי המשרה בו.',
+    'כמו כן, לנוכח מצוקת כוח האדם הקשה, ריבוי המשימות הקיצוני, תורנויות האשכול והתקלות הטכנולוגיות במערכות הבנק, הנני מתריע/ה מראש כי אין לראות בי אחראי/ת לכל עיכוב בשירות, פגיעה במדדי שביעות רצון או טעות תפעולית אנושית שתיגרם בתום לב עקב סביבת העבודה הבלתי אפשרית שיצר הבנק.'
+  ];
+  const CHAPTER_4 = [
+    '4.1. לאייש לאלתר את תקני כוח האדם החסרים ביחידה, להפסיק את העמסת תורנויות האשכול הבלתי סבירות, ולהתאים את נפח המשימות והיעדים למצבת העובדים בפועל.',
+    '4.2. להפסיק באופן מיידי כל דרישה, ישירה או משתמעת, להגעה מוקדמת או לעבודה בשעות נוספות ופיצולים החורגים מהוראות חוק שעות עבודה ומנוחה, ולהבטיח רישום ותשלום מלא בגין כל דקת עבודה.',
+    '4.3. להבטיח באופן מעשי ויומיומי מתן הפסקות מנוחה וארוחה רצופות על פי סעיף 20 לחוק שעות עבודה ומנוחה, להפסיק את מדידת הזמנים הפוגענית לצרכים פיזיולוגיים, ולהבטיח תנאי תברואה, ניקיון וציוד נאותים ביחידה.',
+    '4.4. להציב מענה אבטחה הולם להגנת העובדים מפני אלימות לקוחות, להגן על חיי העובדים וזכויות ההורים בעתות חירום/מלחמה ללא ניכוי ימי חופשה כפוי או הפליית עובדים מהבית, ולכבד במלואן המלצות רפואיות וימי מחלה.',
+    '4.5. לבטל כל סימון שרירותי במסגרת מכסת 5% כפויה ("טעוני שיפור"), להסיר חסמים ומעצורים מפני קידום ומעבר תפקידים, ולהימנע מכל פגיעה, התנכלות, איום או סנקציה כלפיי עקב עמידה על זכויותיי החוקיות או עקב הגשת התרעה זו.'
+  ];
+  const SEVEN_DAY_WARNING = 'ככל שלא יינקטו צעדים אופרטיביים ממשיים לתיקון המצב תוך 7 ימים ממועד מכתב זה, שמורה לי הזכות המלאה לפנות ללא התרעה נוספת לכל הערכאות והרשויות המוסמכות, לרבות הגשת תביעה לבית הדין האזורי לעבודה, הגשת תלונה רשמית למינהל ההסדרה והאכיפה במשרד העבודה, דיווח לפיקוח על הבנקים בבנק ישראל בגין סיכון תפעולי חמור, ומיצוי מלוא זכויותיי מול המוסד לביטוח לאומי (ענף נפגעי עבודה).';
+  const RIGHTS_RESERVED = 'אין באמור במכתב זה כדי לגרוע מכל זכות, טענה או סעד העומדים לי על פי כל דין, הסכם קיבוצי או צו הרחבה.';
+
+  const CH_TITLES = {
+    1: '1. הבסיס המשפטי וחובות המעסיק הקוגנטיות על פי דין',
+    2: '2. פירוט העובדות: עומסים, הפרות חוקי מגן ופגיעה בתנאי ההעסקה',
+    3: '3. הפגיעה בבריאותי הגופנית והנפשית והעברת האחריות לבנק',
+    4: '4. דרישות אופרטיביות מיידיות והתרעה רשמית טרם פנייה לערכאות, משרד העבודה ובנק ישראל'
+  };
+
+  const DEMO_DATA = {
+    inputs: {
+      'input-fullName': 'ישראלה ישראלי',
+      'input-idNumber': '123456782',
+      'input-role': 'בנקאי/ת לקוחות פרטיים',
+      'input-district': 'מרכז',
+      'input-branchName': 'סניף לדוגמה',
+      'input-branchNumber': '000',
+      'input-seniority': '9 שנים (קבוע דור א\')',
+      'input-earlyArrivalText': 'התייצבות קבועה בשעה 07:30, כ-45 דקות לפני תחילת המשמרת',
+      'input-overtimeText': 'סיום יום עבודה קבוע לאחר השעה 18:30 וכ-11 שעות בימי פיצול',
+      'input-clusterDutyOverloadDetail': 'תורנות אשכול ל-5 סניפים במקביל',
+      'input-staffCollapseDetail': '3 תקנים חסרים מתוך 9 במהלך השנה האחרונה',
+      'input-systemFailuresDetail': 'השבתות חוזרות בשעות העומס',
+      'input-severeStressIllnessDetail': ''
+    },
+    checks: ['earlyArrival', 'overtime', 'clusterDutyOverload', 'staffCollapse', 'doubleWorkload', 'noBreaks', 'multitasking', 'systemFailures', 'burnout', 'acutePhysicalSymptoms', 'medicalCare', 'mentalPeace'],
+    customHourLogs: ['בחודש האחרון: 6 ימי פיצול רצופים ללא יום מנוחה מלא ביניהם']
+  };
+
+  /* =========================================================================
+     עזרים
+     ========================================================================= */
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+  // עוטף כתובות מייל לטקסט LTR מבודד בתוך טקסט עברי
+  const htmlWithLtrEmails = s => escapeHtml(s).replace(EMAIL_RE, m => `<span class="ltr" dir="ltr">${m}</span>`);
+  const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+  const todayIso = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+  const formatDate = iso => {
+    if (!iso) return new Date().toLocaleDateString('he-IL');
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  };
+  const isValidIsraeliId = id => {
+    if (!/^\d{9}$/.test(id)) return false;
+    let sum = 0;
+    for (let i = 0; i < 9; i++) { let n = Number(id[i]) * ((i % 2) + 1); if (n > 9) n -= 9; sum += n; }
+    return sum % 10 === 0;
+  };
+  const storage = {
+    get(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; } },
+    set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; } },
+    remove(key) { try { localStorage.removeItem(key); } catch (e) { /* ignore */ } }
+  };
+
+  /* =========================================================================
+     מצב האפליקציה
+     ========================================================================= */
+  let currentStep = 1;
+  let signatureDataUrl = '';
+  let customHourLogs = [];
+  let stateVersion = 0;
+  const pdfCache = { version: -1, promise: null, assets: null };
+  let cachedPdfFile = null;
+
+  function collectState() {
+    const s = { checks: {} };
+    $$('[id^="input-"]').forEach(el => {
+      if (el.id === 'input-endpointUrl' || el.id === 'input-endpointToken') return;
+      s[el.id.slice(6)] = el.value.trim();
+    });
+    $$('input[type="checkbox"][id^="chk-"]').forEach(el => { s.checks[el.id.slice(4)] = el.checked; });
+    s.recipients = {};
+    $$('input[type="checkbox"][id^="rcp-"]').forEach(el => { s.recipients[el.id.slice(4)] = el.checked; });
+    s.customHourLogs = customHourLogs.map(v => v.trim()).filter(Boolean);
+    s.signatureDataUrl = signatureDataUrl;
+    return s;
+  }
+
+  function getRecipients(s) {
+    const custom = s.customRecipient || '';
+    const customEmails = custom.match(EMAIL_RE) || [];
+    const toTitles = [], ccTitles = [], to = [], cc = [];
+    if (custom) { toTitles.push(custom); to.push(...customEmails); }
+    RECIPIENT_DEFINITIONS.forEach(r => {
+      if (!s.recipients[r.id]) return;
+      if (r.type === 'to') { toTitles.push(r.title); to.push(...r.emails); }
+      else { ccTitles.push(r.title); cc.push(...r.emails); }
+    });
+    const uniq = arr => Array.from(new Set(arr.map(e => e.trim()).filter(Boolean)));
+    return { toTitles, ccTitles, to: uniq(to), cc: uniq(cc) };
+  }
+
+  /* =========================================================================
+     בניית המכתב
+     ========================================================================= */
+  function buildLetterModel(s) {
+    const ph = v => (v && v.trim()) ? v.trim() : '__________';
+    const paren = v => (v && v.trim()) ? ` (${v.trim()})` : '';
+    const rec = getRecipients(s);
+    const seniorityPhrase = s.seniority ? `, בוותק ובמעמד העסקה של ${s.seniority}` : '';
+
+    const opening = `אני הח"מ, ${ph(s.fullName)} (ת.ז. ${ph(s.idNumber)}), המועסק/ת בבנק הפועלים בע"מ בתפקיד ${ph(s.role)} בסניף/יחידה ${ph(s.branchName)} (מס' ${ph(s.branchNumber)}) ב${ph(s.district)}${seniorityPhrase}, פונה אליכם במכתב התרעה משפטי רשמי, דחוף ומחייב זה, אשר מהווה תיעוד ראייתי בזמן אמת והתרעה אחרונה בטרם פנייה לערכאות משפטיות ולגורמי האכיפה והרגולציה המוסמכים, כדלקמן:`;
+
+    const ch2 = [];
+    CONDITION_ITEMS.forEach(item => {
+      if (s.checks[item.id]) ch2.push({ title: item.title, text: item.text(paren(item.detailId ? s[item.detailId] : '')) });
+      if (item.id === CUSTOM_LOGS_AFTER) {
+        s.customHourLogs.forEach((extraItem, i) => ch2.push({ title: '', text: `חריגת שעות ועומס משמרות נוסף (${i + 1}): ${extraItem}`, customLog: true }));
+      }
+    });
+    ch2.forEach((it, i) => { it.num = `2.${i + 1}.`; });
+
+    const ch3 = HEALTH_ITEMS.filter(h => s.checks[h.id]).map(h => ({ text: h.text(paren(h.detailId ? s[h.detailId] : '')) }));
+    ch3.forEach((it, i) => { it.num = `3.${i + 1}.`; });
+    const ch3Closing = CHAPTER_3_CLOSING.map((t, i) => ({ num: `3.${ch3.length + i + 1}.`, text: t }));
+
+    const subject = `מכתב התרעה משפטי רשמי – עומס עבודה חריג, פגיעה בבריאות והפרת חוקי מגן – ${ph(s.fullName)}, ${ph(s.role)}, סניף/יחידה ${ph(s.branchName)} (${ph(s.branchNumber)})`;
+    const shortSubject = `התרעה משפטית – עומס חריג והפרת חוקי מגן – ${ph(s.fullName)}`;
+
+    return { s, rec, date: formatDate(s.letterDate), opening, ch2, ch3, ch3Closing, subject, shortSubject };
+  }
+
+  function renderLetterHTML(m, { pdfMode = false } = {}) {
+    const s = m.s;
+    const li = arr => arr.map(t => `<li>${htmlWithLtrEmails(t)}</li>`).join('');
+    const item = it => `<p class="lp-item"><span class="lp-num">${it.num}</span>${it.title ? `<span class="lp-item-title">${escapeHtml(it.title)}</span> ` : ''}${escapeHtml(it.text)}</p>`;
+    const sig = s.signatureDataUrl
+      ? `<img src="${s.signatureDataUrl}" alt="חתימה">`
+      : `<div class="sig-missing" style="height:48px">[חתימה טרם נקלטה]</div>`;
+    return `
+      <div class="legal-paper${pdfMode ? ' pdf-mode' : ''}">
+        <div class="lp-meta"><span class="lp-tag">דחוף · התרעה משפטית · נשלח בדואר אלקטרוני</span><span>תאריך: ${escapeHtml(m.date)}</span></div>
+        <div class="lp-label">לכבוד:</div>
+        <ol class="lp-addressees">${m.rec.toTitles.length ? li(m.rec.toTitles) : '<li class="lp-empty">[לא נבחרו נמענים ישירים]</li>'}</ol>
+        ${m.rec.ccTitles.length ? `<div class="lp-label">העתקים:</div><ol class="lp-addressees">${li(m.rec.ccTitles)}</ol>` : ''}
+        <div class="lp-subject">הנדון: <u>התרעה משפטית רשמית בגין עומס עבודה חריג, הפרת חוקי מגן ופגיעה בבריאותי – ${escapeHtml(s.fullName || '__________')}</u></div>
+        <p>${escapeHtml(m.opening)}</p>
+
+        <h3>${CH_TITLES[1]}</h3>
+        ${CHAPTER_1.map(t => `<p class="lp-item">${escapeHtml(t)}</p>`).join('')}
+
+        <h3>${CH_TITLES[2]}</h3>
+        ${m.ch2.length ? m.ch2.map(item).join('') : '<p class="lp-empty">[לא סומנו סעיפים בשלב 3]</p>'}
+
+        <h3>${CH_TITLES[3]}</h3>
+        ${m.ch3.map(item).join('')}
+        ${m.ch3Closing.map(item).join('')}
+
+        <h3>${CH_TITLES[4]}</h3>
+        <p>לאור כל האמור לעיל, הנני דורש/ת מהנהלת הבנק לפעול באופן מיידי כדלקמן:</p>
+        ${CHAPTER_4.map(t => `<p class="lp-item">${escapeHtml(t)}</p>`).join('')}
+        <p class="lp-warning lp-item">${escapeHtml(SEVEN_DAY_WARNING)}</p>
+        <p class="lp-keep">${escapeHtml(RIGHTS_RESERVED)}</p>
+
+        <div class="lp-signature">
+          <p style="margin-bottom:2px">בכבוד רב,</p>
+          ${sig}
+          <div class="sig-line">
+            <strong>${escapeHtml(s.fullName || '__________')}</strong><br>
+            ת.ז. ${escapeHtml(s.idNumber || '__________')}<br>
+            ${escapeHtml(s.role || '')}${s.branchName ? ` · ${escapeHtml(s.branchName)}${s.branchNumber ? ` (${escapeHtml(s.branchNumber)})` : ''}` : ''}<br>
+            תאריך: ${escapeHtml(m.date)}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderLetterText(m) {
+    const s = m.s;
+    const L = [];
+    L.push(`תאריך: ${m.date}`, '');
+    L.push('לכבוד:');
+    m.rec.toTitles.forEach((t, i) => L.push(`${i + 1}. ${t}`));
+    if (m.rec.ccTitles.length) { L.push('', 'העתקים:'); m.rec.ccTitles.forEach((t, i) => L.push(`${i + 1}. ${t}`)); }
+    L.push('', `הנדון: התרעה משפטית רשמית בגין עומס עבודה חריג, הפרת חוקי מגן ופגיעה בבריאותי – ${s.fullName || '__________'}`, '');
+    L.push(m.opening, '');
+    L.push(CH_TITLES[1], ...CHAPTER_1, '');
+    L.push(CH_TITLES[2]);
+    m.ch2.forEach(it => L.push(`${it.num} ${it.title ? it.title + ' ' : ''}${it.text}`));
+    L.push('', CH_TITLES[3]);
+    [...m.ch3, ...m.ch3Closing].forEach(it => L.push(`${it.num} ${it.text}`));
+    L.push('', CH_TITLES[4], 'לאור כל האמור לעיל, הנני דורש/ת מהנהלת הבנק לפעול באופן מיידי כדלקמן:', ...CHAPTER_4, '', SEVEN_DAY_WARNING, '', RIGHTS_RESERVED, '');
+    L.push('בכבוד רב,', s.fullName || '', `ת.ז. ${s.idNumber || ''}`, [s.role, s.branchName && `${s.branchName}${s.branchNumber ? ` (${s.branchNumber})` : ''}`].filter(Boolean).join(' · '), '(חתימה דיגיטלית מופיעה בקובץ ה-PDF המצורף)');
+    return L.join('\n');
+  }
+
+  function buildIntroText(m) {
+    const s = m.s;
+    return [
+      'שלום רב,',
+      '',
+      `מצורף בזאת מכתב התרעה משפטי רשמי וחתום מטעמי, ${s.fullName || ''}${s.idNumber ? ` (ת.ז. ${s.idNumber})` : ''}${s.role ? `, ${s.role}` : ''}${s.branchName ? ` בסניף/יחידה ${s.branchName}${s.branchNumber ? ` (מס' ${s.branchNumber})` : ''}` : ''}, בעניין עומס עבודה חריג, הפרת חוקי מגן ופגיעה בבריאותי.`,
+      'המכתב המלא מצורף כקובץ PDF חתום, ונוסחו מובא גם בגוף הודעה זו.',
+      'אבקש לאשר את קבלת המכתב ולפעול בהתאם לדרישות המפורטות בו בתוך 7 ימים.',
+      '',
+      'בכבוד רב,',
+      s.fullName || ''
+    ].join('\n');
+  }
+
+  // גוף מייל HTML עם עיצוב Inline (לקוחות מייל מסירים <style>)
+  function buildEmailHtml(m) {
+    const P = 'margin:0 0 10px;';
+    const H = 'font-size:16px;font-weight:bold;color:#0f2042;border-bottom:2px solid #0f2042;padding-bottom:3px;margin:18px 0 8px;';
+    const p = (t, extra = '') => `<p style="${P}${extra}">${htmlWithLtrEmails(t)}</p>`;
+    const item = it => `<p style="${P}"><b style="color:#0f2042">${it.num}</b> ${it.title ? `<b>${escapeHtml(it.title)}</b> ` : ''}${escapeHtml(it.text)}</p>`;
+    const intro = buildIntroText(m).split('\n').map(l => l ? escapeHtml(l) : '').join('<br>');
+    return `<div dir="rtl" style="direction:rtl;text-align:right;font-family:Arial,'David',sans-serif;font-size:14.5px;line-height:1.65;color:#111827;max-width:760px">
+      <div style="margin-bottom:18px">${intro}</div>
+      <hr style="border:0;border-top:1px solid #cbd5e1;margin:16px 0">
+      <p style="${P}color:#b91c1c;font-weight:bold">דחוף · התרעה משפטית · תאריך: ${escapeHtml(m.date)}</p>
+      <p style="${P}font-weight:bold">לכבוד:</p>
+      ${m.rec.toTitles.map((t, i) => p(`${i + 1}. ${t}`, 'margin-right:12px;')).join('')}
+      ${m.rec.ccTitles.length ? `<p style="${P}font-weight:bold">העתקים:</p>${m.rec.ccTitles.map((t, i) => p(`${i + 1}. ${t}`, 'margin-right:12px;')).join('')}` : ''}
+      <p style="${P}font-weight:bold;text-align:center;color:#0f2042;border-top:2px solid #0f2042;border-bottom:2px solid #0f2042;padding:8px 0">הנדון: התרעה משפטית רשמית בגין עומס עבודה חריג, הפרת חוקי מגן ופגיעה בבריאותי – ${escapeHtml(m.s.fullName)}</p>
+      ${p(m.opening)}
+      <div style="${H}">${CH_TITLES[1]}</div>${CHAPTER_1.map(t => p(t)).join('')}
+      <div style="${H}">${CH_TITLES[2]}</div>${m.ch2.map(item).join('')}
+      <div style="${H}">${CH_TITLES[3]}</div>${[...m.ch3, ...m.ch3Closing].map(item).join('')}
+      <div style="${H}">${CH_TITLES[4]}</div>${p('לאור כל האמור לעיל, הנני דורש/ת מהנהלת הבנק לפעול באופן מיידי כדלקמן:')}${CHAPTER_4.map(t => p(t)).join('')}
+      ${p(SEVEN_DAY_WARNING, 'border-right:4px solid #b91c1c;background:#fff7f7;padding:8px 10px;')}
+      ${p(RIGHTS_RESERVED)}
+      <p style="${P}margin-top:18px">בכבוד רב,<br><b>${escapeHtml(m.s.fullName)}</b><br>ת.ז. ${escapeHtml(m.s.idNumber)}<br><span style="color:#64748b;font-size:12.5px">(המכתב החתום מצורף כקובץ PDF)</span></p>
+    </div>`;
+  }
+
+  function buildDispatchData() {
+    const s = collectState();
+    const m = buildLetterModel(s);
+    const letterText = renderLetterText(m);
+    const intro = buildIntroText(m);
+    const recipientsText = `אל: ${m.rec.to.join(', ')}${m.rec.cc.length ? `\nהעתק: ${m.rec.cc.join(', ')}` : ''}`;
+    const safeId = (s.idNumber || 'draft').replace(/[^0-9A-Za-z]/g, '');
+    const filename = `Poalim_Legal_Notice_${safeId}_${(s.letterDate || todayIso()).replace(/-/g, '')}.pdf`;
+    return { s, m, letterText, intro, recipientsText, fullText: `${intro}\n\n${'—'.repeat(20)}\n\n${letterText}`, filename };
+  }
+
+  /* =========================================================================
+     ממשק – בניית כרטיסים
+     ========================================================================= */
+  function itemCardHtml({ id, detailId, label, placeholder, legalText }) {
+    return `
+      <div class="item-card card p-3 w-full max-w-full overflow-hidden" data-item="${id}">
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" id="chk-${id}" class="mt-1 h-5 w-5 shrink-0">
+          <span class="flex-1 min-w-0 font-semibold text-navy-900 text-[14px] sm:text-[15px] leading-snug">${escapeHtml(label)}</span>
+        </label>
+        ${detailId ? `
+          <div class="mt-2 pr-8 min-w-0">
+            <input id="input-${detailId}" class="field text-[14px]" type="text" maxlength="400" placeholder="${escapeHtml(placeholder || 'פירוט אישי (אופציונלי)')}">
+            <span class="field-hint">פירוט אישי (אופציונלי) – יתווסף בסוגריים לנוסח הסעיף. הקלדה תסמן את הסעיף אוטומטית.</span>
+          </div>` : ''}
+        <details class="mt-2 pr-8 min-w-0">
+          <summary class="text-[12px] font-semibold text-navy-700">▸ הצג את הנוסח המשפטי במכתב</summary>
+          <p class="mt-1 text-[12.5px] leading-relaxed text-slate-600 text-justify font-legal">${escapeHtml(legalText)}</p>
+        </details>
+      </div>`;
+  }
+
+  function buildDynamicUI() {
+    $('#recipients-list').innerHTML = RECIPIENT_DEFINITIONS.map(r => `
+      <label class="item-card card p-3 flex items-start gap-3 cursor-pointer w-full max-w-full overflow-hidden" data-item="${r.id}">
+        <input type="checkbox" id="rcp-${r.id}" class="mt-1 h-5 w-5 shrink-0" checked>
+        <span class="flex-1 min-w-0">
+          <span class="flex items-center gap-2 flex-wrap">
+            <span class="font-bold text-navy-900 text-[14.5px]">${escapeHtml(r.label)}</span>
+            <span class="text-[10.5px] font-bold rounded-full px-2 py-0.5 ${r.type === 'to' ? 'bg-navy-900 text-white' : 'bg-slate-200 text-slate-700'}">${r.type === 'to' ? 'אל (To)' : 'העתק (CC)'}</span>
+          </span>
+          <span class="block text-[12px] text-slate-600 mt-1 leading-relaxed">${escapeHtml(r.title)}</span>
+          <span class="block text-[12px] text-navy-700 mt-1 break-all text-right">${r.emails.map(e => `<span dir="ltr" class="ltr">${e}</span>`).join(' · ')}</span>
+        </span>
+      </label>`).join('');
+
+    let html = '';
+    CONDITION_ITEMS.forEach(item => {
+      html += itemCardHtml({ id: item.id, detailId: item.detailId, placeholder: item.placeholder, label: item.title.replace(/:$/, ''), legalText: item.text(item.detailId ? ' (…פירוט אישי…)' : '') });
+      if (item.id === CUSTOM_LOGS_AFTER) {
+        html += `
+          <div class="card p-3 w-full max-w-full overflow-hidden border-dashed">
+            <div class="font-semibold text-navy-900 text-[14px]">שורות שעות / משמרות חריגות נוספות</div>
+            <p class="text-[12px] text-slate-500 mt-0.5">כל שורה תתווסף כסעיף נפרד: "חריגת שעות ועומס משמרות נוסף (מס'): …"</p>
+            <div id="custom-logs" class="space-y-2 mt-2"></div>
+            <button type="button" id="btn-add-log" class="btn btn-outline btn-sm mt-2">+ הוסף שורה</button>
+          </div>`;
+      }
+    });
+    $('#conditions-list').innerHTML = html;
+
+    $('#health-list').innerHTML = HEALTH_ITEMS.map(h => itemCardHtml({ id: h.id, detailId: h.detailId, placeholder: h.placeholder, label: h.label, legalText: h.text(h.detailId ? ' (…פירוט אישי…)' : '') })).join('');
+  }
+
+  function renderCustomLogs() {
+    const wrap = $('#custom-logs');
+    wrap.innerHTML = customHourLogs.map((v, i) => `
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="shrink-0 text-xs font-bold text-navy-700 w-5 text-center">${i + 1}</span>
+        <input type="text" maxlength="400" class="field text-[14px] flex-1 min-w-0" data-log-index="${i}" value="${escapeHtml(v)}" placeholder="לדוגמה: שבוע 12/10 – 3 ימי פיצול עד 19:30">
+        <button type="button" class="btn btn-ghost btn-sm shrink-0 text-crimson-700" data-log-remove="${i}" aria-label="הסר שורה">✕</button>
+      </div>`).join('');
+  }
+
+  /* =========================================================================
+     משטח חתימה
+     ========================================================================= */
+  const sigCanvas = () => $('#signature-canvas');
+  function initSignaturePad() {
+    const c = sigCanvas();
+    const ctx = c.getContext('2d');
+    let drawing = false, last = null;
+    const setupCtx = () => { ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0f2042'; ctx.fillStyle = '#0f2042'; };
+    setupCtx();
+    const pos = e => {
+      const r = c.getBoundingClientRect();
+      const p = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+      return { x: (p.clientX - r.left) * (c.width / r.width), y: (p.clientY - r.top) * (c.height / r.height) };
+    };
+    const startDraw = e => {
+      e.preventDefault();
+      drawing = true; last = pos(e); setupCtx();
+      ctx.beginPath(); ctx.arc(last.x, last.y, 1.2, 0, Math.PI * 2); ctx.fill();
+    };
+    const moveDraw = e => {
+      if (!drawing) return;
+      e.preventDefault();
+      const p = pos(e);
+      ctx.beginPath(); ctx.moveTo(last.x, last.y);
+      const mx = (last.x + p.x) / 2, my = (last.y + p.y) / 2;
+      ctx.quadraticCurveTo(last.x, last.y, mx, my); ctx.lineTo(p.x, p.y); ctx.stroke();
+      last = p;
+    };
+    const endDraw = e => {
+      if (!drawing) return;
+      if (e && e.cancelable) e.preventDefault();
+      drawing = false;
+      signatureDataUrl = c.toDataURL('image/png');
+      updateSignatureBadge();
+      onStateChanged();
+    };
+    c.addEventListener('mousedown', startDraw);
+    window.addEventListener('mousemove', moveDraw);
+    window.addEventListener('mouseup', endDraw);
+    c.addEventListener('touchstart', startDraw, { passive: false });
+    c.addEventListener('touchmove', moveDraw, { passive: false });
+    c.addEventListener('touchend', endDraw, { passive: false });
+    c.addEventListener('touchcancel', endDraw, { passive: false });
+  }
+  function clearSignature() {
+    const c = sigCanvas();
+    c.getContext('2d').clearRect(0, 0, c.width, c.height);
+    signatureDataUrl = '';
+    updateSignatureBadge();
+  }
+  function drawSignatureFromDataUrl(url) {
+    return new Promise(resolve => {
+      const c = sigCanvas(), ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, c.width, c.height);
+      if (!url) return resolve();
+      const img = new Image();
+      img.onload = () => { ctx.drawImage(img, 0, 0, c.width, c.height); resolve(); };
+      img.onerror = () => resolve();
+      img.src = url;
+    });
+  }
+  function drawDemoSignature() {
+    const c = sigCanvas(), ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0f2042';
+    ctx.beginPath(); ctx.moveTo(70, 95);
+    for (let x = 70; x <= 380; x += 4) ctx.lineTo(x, 80 + Math.sin(x / 17) * 22 * Math.cos(x / 61) - (x - 70) / 12);
+    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(120, 112); ctx.bezierCurveTo(200, 100, 300, 118, 400, 98); ctx.stroke();
+    signatureDataUrl = c.toDataURL('image/png');
+    updateSignatureBadge();
+  }
+  function updateSignatureBadge() {
+    const b = $('#signature-status');
+    if (signatureDataUrl) { b.textContent = 'חתימה נקלטה ✓'; b.className = 'text-xs font-bold rounded-full px-2.5 py-1 bg-green-100 text-green-800'; }
+    else { b.textContent = 'טרם נחתם'; b.className = 'text-xs font-bold rounded-full px-2.5 py-1 bg-amber-100 text-amber-800'; }
+  }
+
+  /* =========================================================================
+     שמירה אוטומטית
+     ========================================================================= */
+  function saveDraft() {
+    const inputs = {}, checkboxes = {};
+    $$('[id^="input-"]').forEach(el => { if (el.id !== 'input-endpointUrl' && el.id !== 'input-endpointToken') inputs[el.id] = el.value; });
+    $$('input[type="checkbox"][id^="chk-"], input[type="checkbox"][id^="rcp-"]').forEach(el => { checkboxes[el.id] = el.checked; });
+    const savedAt = new Date().toISOString();
+    const ok = storage.set(STORAGE_KEY, { inputs, checkboxes, customHourLogs, signatureDataUrl, savedAt });
+    const ind = $('#autosave-indicator');
+    ind.textContent = ok ? `✓ הטיוטה נשמרה במכשיר · ${new Date(savedAt).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}` : '⚠ לא ניתן לשמור טיוטה בדפדפן זה';
+  }
+  const saveDraftDebounced = debounce(saveDraft, 350);
+
+  async function restoreDraft() {
+    const d = storage.get(STORAGE_KEY);
+    if (!d) return false;
+    Object.entries(d.inputs || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
+    Object.entries(d.checkboxes || {}).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.checked = !!v; });
+    customHourLogs = Array.isArray(d.customHourLogs) ? d.customHourLogs : [];
+    signatureDataUrl = d.signatureDataUrl || '';
+    await drawSignatureFromDataUrl(signatureDataUrl);
+    updateSignatureBadge();
+    if (d.savedAt) $('#autosave-indicator').textContent = `✓ טיוטה שוחזרה · נשמרה ${new Date(d.savedAt).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' })}`;
+    return true;
+  }
+
+  /* =========================================================================
+     עדכון מצב / תצוגה
+     ========================================================================= */
+  function onStateChanged() {
+    stateVersion++;
+    cachedPdfFile = null;
+    refreshCardStates();
+    updateRecipientSummary();
+    updateQuickBar();
+    if (currentStep === 5) { renderPreview(); updateDispatchLinks(); scheduleBackgroundPdf(); }
+    saveDraftDebounced();
+  }
+
+  function refreshCardStates() {
+    $$('.item-card').forEach(card => {
+      const cb = card.querySelector('input[type="checkbox"]');
+      card.classList.toggle('is-checked', !!(cb && cb.checked));
+    });
+  }
+
+  function updateRecipientSummary() {
+    const rec = getRecipients(collectState());
+    $('#summary-to').textContent = rec.to.join(', ') || '—';
+    $('#summary-cc').textContent = rec.cc.join(', ') || '—';
+  }
+
+  function updateQuickBar() {
+    const s = collectState();
+    const rec = getRecipients(s);
+    const n2 = CONDITION_ITEMS.filter(i => s.checks[i.id]).length + s.customHourLogs.length;
+    const n3 = HEALTH_ITEMS.filter(i => s.checks[i.id]).length;
+    const chip = (ok, text) => `<span class="rounded-full px-2 py-0.5 font-semibold ${ok ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">${text}</span>`;
+    $('#quick-status').innerHTML = [
+      `<span class="font-bold text-navy-900 ml-1">שלב ${currentStep} מתוך 5</span>`,
+      chip(!!s.fullName, s.fullName ? '✓ פרטים' : '✗ שם חסר'),
+      chip(!!s.signatureDataUrl, s.signatureDataUrl ? '✓ חתימה' : '✗ חתימה'),
+      chip(rec.to.length + rec.cc.length > 0, `${rec.to.length + rec.cc.length} כתובות`),
+      chip(n2 > 0, `${n2} סעיפי עומס`),
+      chip(n3 > 0, `${n3} סעיפי בריאות`),
+      chip(!!s.checks.disclaimerConfirmed, s.checks.disclaimerConfirmed ? '✓ הצהרה' : '✗ הצהרה')
+    ].join('');
+    $('#btn-prev').disabled = currentStep === 1;
+    $('#btn-next').textContent = currentStep === 5 ? '📥 הפק ושגר' : 'הבא ←';
+  }
+
+  function renderPreview() {
+    const s = collectState();
+    $('#legal-document').innerHTML = renderLetterHTML(buildLetterModel(s));
+    renderValidationPanel();
+  }
+
+  function setStep(stepNum) {
+    currentStep = Math.min(5, Math.max(1, stepNum));
+    $$('[data-step-panel]').forEach(p => { p.hidden = Number(p.dataset.stepPanel) !== currentStep; });
+    $$('.step-btn').forEach(b => {
+      const n = Number(b.dataset.step);
+      b.classList.toggle('is-active', n === currentStep);
+      b.classList.toggle('is-done', n < currentStep);
+      b.setAttribute('aria-current', n === currentStep ? 'step' : 'false');
+    });
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    if (currentStep === 5) { renderPreview(); updateDispatchLinks(); scheduleBackgroundPdf(true); }
+    updateQuickBar();
+  }
+
+  /* =========================================================================
+     ולידציה
+     ========================================================================= */
+  function validate(s) {
+    const errors = [];
+    const rec = getRecipients(s);
+    if (!s.fullName) errors.push({ step: 1, msg: 'יש להזין שם מלא.' });
+    if (s.idNumber && !isValidIsraeliId(s.idNumber)) errors.push({ step: 1, msg: 'מספר תעודת הזהות אינו תקין (נדרשות 9 ספרות כולל ספרת ביקורת).', soft: true });
+    if (!s.signatureDataUrl) errors.push({ step: 1, msg: 'יש לחתום על משטח החתימה הדיגיטלי.' });
+    if (!s.checks.disclaimerConfirmed) errors.push({ step: 1, msg: 'יש לאשר את הצהרת האמת והסרת האחריות.' });
+    if (!rec.to.length && !rec.cc.length) errors.push({ step: 2, msg: 'יש לבחור לפחות מכותב אחד.' });
+    else if (!rec.to.length) errors.push({ step: 2, msg: 'לא נבחר נמען ישיר (To) – יש לבחור לפחות גורם "אל" אחד או להוסיף מכותב ישיר.' });
+    const n2 = CONDITION_ITEMS.filter(i => s.checks[i.id]).length + s.customHourLogs.length;
+    const n3 = HEALTH_ITEMS.filter(i => s.checks[i.id]).length;
+    if (!n2 && !n3) errors.push({ step: 3, msg: 'יש לסמן לפחות סעיף אחד בשלב 3 או בשלב 4.' });
+    return errors;
+  }
+  const blockingErrors = errs => errs.filter(e => !e.soft);
+
+  function errorsHtml(errs) {
+    return `<div class="rounded-xl border border-red-200 bg-red-50 p-3">
+      <p class="font-bold text-crimson-700 text-sm mb-1">יש להשלים לפני השיגור:</p>
+      <ul class="space-y-1 text-[13px] text-slate-700">${errs.map(e => `<li class="flex items-center gap-2 flex-wrap"><span>${e.soft ? '⚠️' : '✗'} ${escapeHtml(e.msg)}</span><button type="button" class="btn btn-outline btn-sm" data-goto-step="${e.step}">מעבר לשלב ${e.step}</button></li>`).join('')}</ul>
+    </div>`;
+  }
+  function renderValidationPanel() {
+    const errs = validate(collectState());
+    const panel = $('#validation-panel');
+    panel.classList.toggle('hidden', !errs.length);
+    panel.innerHTML = errs.length ? errorsHtml(errs) : '';
+  }
+
+  /* =========================================================================
+     הפקת PDF
+     מנוע ראשי: רינדור דפדפן מקורי של כל עמוד A4 (SVG foreignObject) – שומר על
+     כיווניות RTL, פיסוק ויישור דו-צדדי מדויקים בעברית. מנוע גיבוי: html2pdf.js.
+     ========================================================================= */
+  const PAGE = { W: 794, H: 1123, top: 53, bottom: 72, side: 57 }; // A4 ב-96DPI, שוליים ≈ 14/19/15 מ"מ
+  const PAGE_INNER_W = PAGE.W - 2 * PAGE.side;
+  const PAGE_INNER_H = PAGE.H - PAGE.top - PAGE.bottom;
+  const RENDER_SCALE = 2;
+  const LETTER_FONT_CSS_URL = 'https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700&family=David+Libre:wght@400;700&display=block';
+
+  function waitForGlobal(test, timeoutMs = 15000) {
+    return new Promise((resolve, reject) => {
+      if (test()) return resolve();
+      const t0 = Date.now();
+      const iv = setInterval(() => {
+        if (test()) { clearInterval(iv); resolve(); }
+        else if (Date.now() - t0 > timeoutMs) { clearInterval(iv); reject(new Error('ספריית הפקת ה-PDF לא נטענה. בדקו את החיבור לאינטרנט.')); }
+      }, 100);
+    });
+  }
+
+  function arrayBufferToBase64(buf) {
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  function dataUriToBlob(dataUri, type = 'application/pdf') {
+    const bin = atob(dataUri.slice(dataUri.indexOf('base64,') + 7));
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type });
+  }
+
+  // גופני המסמך מוטמעים כ-Data URI (תמונת SVG אינה טוענת משאבים חיצוניים)
+  let embeddedFontCssPromise = null;
+  function getEmbeddedFontCss() {
+    if (!embeddedFontCssPromise) {
+      embeddedFontCssPromise = (async () => {
+        const css = await (await fetch(LETTER_FONT_CSS_URL)).text();
+        const urls = Array.from(new Set(css.match(/https:\/\/fonts\.gstatic\.com\/[^)'"\s]+/g) || []));
+        const map = {};
+        await Promise.all(urls.map(async u => {
+          const buf = await (await fetch(u)).arrayBuffer();
+          map[u] = `data:font/woff2;base64,${arrayBufferToBase64(buf)}`;
+        }));
+        return css.replace(/https:\/\/fonts\.gstatic\.com\/[^)'"\s]+/g, u => map[u] || u);
+      })().catch(() => { embeddedFontCssPromise = null; return ''; });
+    }
+    return embeddedFontCssPromise;
+  }
+
+  // חלוקת המכתב לעמודים לפי גובה הבלוקים בפועל (ללא חיתוך פסקאות)
+  function paginateLetter(html) {
+    const host = document.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    host.style.cssText = `position:fixed;top:0;left:-30000px;width:${PAGE_INNER_W}px;visibility:hidden;pointer-events:none;direction:rtl;`;
+    host.innerHTML = html;
+    document.body.appendChild(host);
+    const paper = host.querySelector('.legal-paper');
+    const blocks = Array.from(paper.children);
+    const base = paper.getBoundingClientRect().top;
+    const rects = blocks.map(b => {
+      const r = b.getBoundingClientRect(), cs = getComputedStyle(b);
+      return { top: r.top - base - parseFloat(cs.marginTop || 0), bottom: r.bottom - base + parseFloat(cs.marginBottom || 0) };
+    });
+    const keepWithNext = el => el.tagName === 'H3' || el.classList.contains('lp-label') || el.classList.contains('lp-keep');
+    const pages = [];
+    let cur = [], pageTop = 0;
+    blocks.forEach((b, i) => {
+      if (!cur.length) pageTop = rects[i].top;
+      const need = (keepWithNext(b) && rects[i + 1]) ? rects[i + 1].bottom : rects[i].bottom;
+      if (cur.length && need - pageTop > PAGE_INNER_H - 4) { pages.push(cur); cur = []; pageTop = rects[i].top; }
+      cur.push(b.outerHTML);
+    });
+    if (cur.length) pages.push(cur);
+    host.remove();
+    return pages.map(p => p.join(''));
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('רינדור העמוד נכשל'));
+      img.src = src;
+    });
+  }
+
+  async function renderPageCanvas(pageHtml, pageNum, total, css) {
+    const wrapper = document.createElement('div');
+    wrapper.setAttribute('dir', 'rtl');
+    wrapper.style.cssText = `width:${PAGE_INNER_W}px;height:${PAGE_INNER_H}px;overflow:hidden;background:#ffffff;direction:rtl;`;
+    const style = document.createElement('style');
+    style.textContent = css;
+    const paper = document.createElement('div');
+    paper.className = 'legal-paper pdf-mode';
+    paper.setAttribute('dir', 'rtl');
+    paper.innerHTML = pageHtml;
+    wrapper.append(style, paper);
+    const xhtml = new XMLSerializer().serializeToString(wrapper);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_INNER_W}" height="${PAGE_INNER_H}"><foreignObject x="0" y="0" width="${PAGE_INNER_W}" height="${PAGE_INNER_H}">${xhtml}</foreignObject></svg>`;
+    const img = await loadImage(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
+    if (img.decode) await img.decode().catch(() => {});
+    const S = RENDER_SCALE;
+    const c = document.createElement('canvas');
+    c.width = PAGE.W * S; c.height = PAGE.H * S;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, PAGE.side * S, PAGE.top * S, PAGE_INNER_W * S, PAGE_INNER_H * S);
+    // כותרת תחתונה ומספור עמודים
+    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = S;
+    ctx.beginPath(); ctx.moveTo(PAGE.side * S, (PAGE.H - 44) * S); ctx.lineTo((PAGE.W - PAGE.side) * S, (PAGE.H - 44) * S); ctx.stroke();
+    ctx.direction = 'rtl'; ctx.textAlign = 'center'; ctx.fillStyle = '#64748b';
+    ctx.font = `${11 * S}px Heebo, Assistant, Arial, sans-serif`;
+    ctx.fillText(`עמוד ${pageNum} מתוך ${total}`, (PAGE.W / 2) * S, (PAGE.H - 26) * S);
+    c.getContext('2d').getImageData(0, 0, 1, 1); // זורק SecurityError אם הקנבס "מוכתם" (דפדפנים ישנים)
+    return c;
+  }
+
+  async function renderNative(d) {
+    await waitForGlobal(() => window.jspdf && window.jspdf.jsPDF);
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const css = `${await getEmbeddedFontCss()}\n${$('#letter-styles').textContent}`;
+    const pages = paginateLetter(renderLetterHTML(d.m, { pdfMode: true }));
+    const canvases = [];
+    for (let i = 0; i < pages.length; i++) canvases.push(await renderPageCanvas(pages[i], i + 1, pages.length, css));
+    const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+    canvases.forEach((c, i) => {
+      if (i) pdf.addPage('a4', 'portrait');
+      pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+    });
+    // תמונת תצוגה אחת של כל העמודים (לחלונית השיגור)
+    const gap = 14, w = PAGE.W, h = PAGE.H;
+    const preview = document.createElement('canvas');
+    preview.width = w; preview.height = canvases.length * h + (canvases.length - 1) * gap;
+    const pctx = preview.getContext('2d');
+    pctx.fillStyle = '#e2e8f0'; pctx.fillRect(0, 0, preview.width, preview.height);
+    canvases.forEach((c, i) => pctx.drawImage(c, 0, i * (h + gap), w, h));
+    return { pdf, pages: canvases.length, imageUrl: preview.toDataURL('image/jpeg', 0.9) };
+  }
+
+  async function renderWithHtml2pdf(d) {
+    await waitForGlobal(() => window.html2pdf);
+    let canvasRef = null, pdf = null;
+    const opt = {
+      margin: [14, 15, 19, 15],
+      image: { type: 'jpeg', quality: 0.94 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.lp-item', '.lp-signature', 'h3', '.lp-subject', 'li'] }
+    };
+    await html2pdf().set(opt).from(renderLetterHTML(d.m, { pdfMode: true }), 'string')
+      .toCanvas().get('canvas').then(c => { canvasRef = c; })
+      .toPdf().get('pdf').then(p => { pdf = p; });
+    const total = pdf.internal.getNumberOfPages();
+    for (let i = 1; i <= total; i++) {
+      pdf.setPage(i); pdf.setFontSize(8.5); pdf.setTextColor(120);
+      pdf.text(`${i} / ${total}`, 105, 290, { align: 'center' });
+    }
+    return { pdf, pages: total, imageUrl: canvasRef ? canvasRef.toDataURL('image/jpeg', 0.88) : '' };
+  }
+
+  async function renderPdfAssets(version) {
+    const d = buildDispatchData();
+    let out;
+    try { out = await renderNative(d); }
+    catch (err) { console.warn('Native render failed, falling back to html2pdf:', err); out = await renderWithHtml2pdf(d); }
+    out.pdf.setProperties({ title: 'Legal Notice', subject: 'Legal Notice', creator: 'Legal notice generator' });
+    const dataUri = out.pdf.output('datauristring');
+    const blob = dataUriToBlob(dataUri);
+    const file = new File([blob], d.filename, { type: 'application/pdf' });
+    return { version, dataUri, base64: dataUri.slice(dataUri.indexOf('base64,') + 7), blob, file, imageUrl: out.imageUrl, filename: d.filename, pages: out.pages };
+  }
+
+  function generatePdfAssets() {
+    const v = stateVersion;
+    if (pdfCache.assets && pdfCache.version === v) return Promise.resolve(pdfCache.assets);
+    if (pdfCache.promise && pdfCache.version === v) return pdfCache.promise;
+    pdfCache.version = v;
+    setPdfIndicator('busy');
+    pdfCache.promise = renderPdfAssets(v).then(assets => {
+      if (pdfCache.version === v) {
+        pdfCache.assets = assets; pdfCache.promise = null;
+        cachedPdfFile = assets.file;
+        setPdfIndicator('ready', assets.pages);
+      }
+      return assets;
+    }).catch(err => {
+      if (pdfCache.version === v) { pdfCache.promise = null; setPdfIndicator('error'); }
+      throw err;
+    });
+    return pdfCache.promise;
+  }
+
+  const scheduleBackgroundPdf = (() => {
+    const run = debounce(() => { if (currentStep === 5) generatePdfAssets().catch(() => {}); }, 1400);
+    return (immediate) => { setPdfIndicator(pdfCache.assets && pdfCache.version === stateVersion ? 'ready' : 'stale'); if (immediate) setTimeout(() => { if (currentStep === 5) generatePdfAssets().catch(() => {}); }, 250); else run(); };
+  })();
+
+  function setPdfIndicator(state, pages) {
+    const el = $('#pdf-ready-indicator');
+    if (!el) return;
+    const map = {
+      busy: ['⏳ מפיק PDF חתום…', 'bg-blue-50 text-blue-800'],
+      ready: [`✓ PDF חתום מוכן${pages ? ` (${pages} עמ')` : ''}`, 'bg-green-50 text-green-800'],
+      stale: ['PDF יעודכן אוטומטית', 'bg-slate-100 text-slate-600'],
+      error: ['⚠ שגיאה בהפקת PDF', 'bg-red-50 text-red-800']
+    };
+    const [t, cls] = map[state] || map.stale;
+    el.textContent = t;
+    el.className = `text-[11.5px] font-semibold rounded-full px-2.5 py-1 ${cls}`;
+  }
+
+  /* =========================================================================
+     קישורי מייל (mailto / intent / Gmail Web)
+     ========================================================================= */
+  function buildCompactMailto(d) {
+    const enc = encodeURIComponent;
+    const to = d.m.rec.to.join(',');
+    const cc = d.m.rec.cc.join(',');
+    const max = APP_CONFIG.MAILTO_MAX_LENGTH;
+    const shortBody = 'שלום רב,\nמצורף מכתב התרעה משפטי רשמי וחתום (קובץ PDF). נוסח המכתב המלא הועתק ללוח – יש להדביקו כאן.\nבכבוד רב,\n' + (d.s.fullName || '');
+    const tiny = 'מצורף מכתב התרעה משפטי חתום.';
+    const candidates = [
+      { su: d.m.subject, body: shortBody },
+      { su: d.m.shortSubject, body: shortBody },
+      { su: d.m.shortSubject, body: tiny },
+      { su: d.m.shortSubject, body: '' },
+      { su: 'התרעה משפטית', body: '' }
+    ];
+    for (const c of candidates) {
+      const q = [cc && `cc=${cc}`, `subject=${enc(c.su)}`, c.body && `body=${enc(c.body)}`].filter(Boolean).join('&');
+      const url = `mailto:${to}?${q}`;
+      if (url.length <= max) return url;
+    }
+    return `mailto:${to}?${cc ? `cc=${cc}&` : ''}subject=${enc('התרעה משפטית')}`;
+  }
+  function buildAndroidIntent(d) {
+    const enc = encodeURIComponent;
+    const to = d.m.rec.to.join(',');
+    const cc = d.m.rec.cc.join(',');
+    const q = [cc && `cc=${cc}`, `subject=${enc(d.m.shortSubject)}`, `body=${enc('מצורף מכתב התרעה משפטי חתום. נוסח המכתב המלא הועתק ללוח.')}`].filter(Boolean).join('&');
+    return `intent:${to}?${q}#Intent;scheme=mailto;package=com.google.android.gm;end`;
+  }
+  function buildGmailWeb(d) {
+    const enc = encodeURIComponent;
+    let body = d.fullText;
+    if (body.length > 5500) body = d.intro + '\n\n(נוסח המכתב המלא הועתק ללוח – יש להדביקו כאן ולצרף את קובץ ה-PDF שהורד.)';
+    return `https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=${enc(d.m.rec.to.join(','))}&cc=${enc(d.m.rec.cc.join(','))}&su=${enc(d.m.subject)}&body=${enc(body)}`;
+  }
+  function updateDispatchLinks() {
+    const d = buildDispatchData();
+    const mailto = buildCompactMailto(d), intent = buildAndroidIntent(d), gweb = buildGmailWeb(d);
+    ['#link-mailto', '#hub-link-mailto'].forEach(s => { $(s).href = mailto; });
+    ['#link-intent', '#hub-link-intent'].forEach(s => { $(s).href = intent; });
+    ['#link-gmail-web', '#hub-link-gmail-web'].forEach(s => { $(s).href = gweb; });
+  }
+
+  /* =========================================================================
+     לוח העתקה
+     ========================================================================= */
+  function legacyCopy(text, html) {
+    try {
+      const el = document.createElement('div');
+      el.contentEditable = 'true';
+      el.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;overflow:hidden;white-space:pre-wrap;';
+      if (html) el.innerHTML = html; else el.textContent = text;
+      document.body.appendChild(el);
+      const range = document.createRange(); range.selectNodeContents(el);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      const ok = document.execCommand('copy');
+      sel.removeAllRanges(); el.remove();
+      return ok;
+    } catch (e) { return false; }
+  }
+  async function copyText(text) {
+    try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; } } catch (e) { /* fallback */ }
+    return legacyCopy(text);
+  }
+  async function copyRich(html, text) {
+    try {
+      if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write && window.isSecureContext) {
+        await navigator.clipboard.write([new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([text], { type: 'text/plain' })
+        })]);
+        return true;
+      }
+    } catch (e) { /* fallback */ }
+    return legacyCopy(text, html) || copyText(text);
+  }
+  function copyKind(kind, { silent = false } = {}) {
+    const d = buildDispatchData();
+    let p;
+    if (kind === 'recipients') p = copyText(d.recipientsText.replace(/^אל: /, '').replace('\nהעתק: ', ', '));
+    else if (kind === 'subject') p = copyText(d.m.subject);
+    else p = copyRich(buildEmailHtml(d.m), d.fullText);
+    const labels = { recipients: 'רשימת הנמענים', subject: 'שורת הנושא', letter: 'ההקדמה והמכתב המלא' };
+    return Promise.resolve(p).then(ok => { if (!silent) showToast(ok ? `${labels[kind]} הועתק/ה ללוח ✓` : 'ההעתקה נחסמה בדפדפן – סמנו והעתיקו ידנית', ok ? 'ok' : 'warn'); return ok; });
+  }
+
+  /* =========================================================================
+     הורדות (PDF / Word)
+     ========================================================================= */
+  function triggerDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.rel = 'noopener'; a.style.display = 'none';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+  function utf8ToBase64(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  const wrap76 = s => s.replace(/(.{76})/g, '$1\r\n');
+  // קובץ Word בפורמט MHTML (חתימה כתמונה מוטמעת)
+  function buildWordDocument() {
+    const d = buildDispatchData();
+    const sigLoc = 'file:///C:/notice/signature.png';
+    const s = { ...d.s, signatureDataUrl: d.s.signatureDataUrl ? sigLoc : '' };
+    let body = renderLetterHTML({ ...d.m, s }, { pdfMode: true });
+    const css = `
+      body{direction:rtl;font-family:'David','Frank Ruhl Libre',serif;font-size:12.5pt;line-height:1.6;}
+      p{margin:0 0 6pt;text-align:justify;} .lp-meta{color:#334155;font-size:10.5pt;margin-bottom:10pt}
+      .lp-tag{color:#b91c1c;font-weight:bold} .lp-label{font-weight:bold;color:#0f2042;margin-top:8pt}
+      ol{margin-top:0;margin-bottom:4pt} li{font-size:11.5pt;margin-bottom:2pt}
+      .lp-subject{font-weight:bold;text-align:center;color:#0f2042;border-top:1.5pt solid #0f2042;border-bottom:1.5pt solid #0f2042;padding:6pt;margin:12pt 0}
+      h3{font-size:13.5pt;color:#0f2042;border-bottom:1.5pt solid #0f2042;margin:14pt 0 6pt;padding-bottom:2pt}
+      .lp-num{font-weight:bold;color:#0f2042} .lp-item-title{font-weight:bold}
+      .lp-warning{border-right:3pt solid #b91c1c;background:#fff7f7;padding:6pt}
+      .lp-signature{margin-top:18pt} .lp-signature img{width:200px;height:61px} .sig-line{border-top:1pt solid #000;width:200px;padding-top:3pt}
+      .lp-empty{color:#94a3b8;font-style:italic}`;
+    const html = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" lang="he" dir="rtl"><head><meta charset="utf-8"><title>Legal Notice</title>
+      <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->
+      <style>@page{size:21cm 29.7cm;margin:2cm 1.8cm} ${css}</style></head><body dir="rtl">${body}</body></html>`;
+    const boundary = '----=_NextPart_LegalNotice_' + Date.now().toString(36);
+    const parts = [
+      'MIME-Version: 1.0',
+      `Content-Type: multipart/related; boundary="${boundary}"; type="text/html"`,
+      '',
+      `--${boundary}`,
+      'Content-Type: text/html; charset="utf-8"',
+      'Content-Transfer-Encoding: base64',
+      'Content-Location: file:///C:/notice/document.htm',
+      '',
+      wrap76(utf8ToBase64(html)),
+      ''
+    ];
+    if (d.s.signatureDataUrl) {
+      parts.push(`--${boundary}`, 'Content-Type: image/png', 'Content-Transfer-Encoding: base64', `Content-Location: ${sigLoc}`, '', wrap76(d.s.signatureDataUrl.split(',')[1]), '');
+    }
+    parts.push(`--${boundary}--`, '');
+    return { blob: new Blob([parts.join('\r\n')], { type: 'application/msword' }), filename: d.filename.replace(/\.pdf$/, '.doc') };
+  }
+
+  /* =========================================================================
+     שיגור בענן
+     ========================================================================= */
+  function getDispatchSettings() { return storage.get(DISPATCH_SETTINGS_KEY) || { url: '', token: '' }; }
+  function resolveEndpoint() {
+    const st = getDispatchSettings();
+    if (st.url) return st.url;
+    if (APP_CONFIG.APPS_SCRIPT_URL) return APP_CONFIG.APPS_SCRIPT_URL;
+    if (/^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && APP_CONFIG.SERVERLESS_URL) return APP_CONFIG.SERVERLESS_URL;
+    return '';
+  }
+  async function postToEndpoint(endpoint, payload) {
+    const isAppsScript = /script\.google(usercontent)?\.com/.test(endpoint);
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), APP_CONFIG.REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        // Apps Script אינו תומך בבקשות Preflight – לכן text/plain
+        headers: { 'Content-Type': isAppsScript ? 'text/plain;charset=utf-8' : 'application/json' },
+        body: JSON.stringify(payload),
+        redirect: 'follow',
+        signal: ctrl.signal
+      });
+      const raw = await res.text();
+      let data = {};
+      try { data = JSON.parse(raw); } catch (e) { data = { status: res.ok ? 'error' : 'error', message: raw.slice(0, 200) || `HTTP ${res.status}` }; }
+      if (!res.ok || data.status !== 'ok') throw new Error(data.message || `HTTP ${res.status}`);
+      return data;
+    } catch (err) {
+      if (err.name === 'AbortError') throw new Error('תם הזמן להמתנה לתשובת השרת.');
+      if (err instanceof TypeError) throw new Error('לא ניתן להתחבר לשרת השיגור (רשת / CORS / כתובת שגויה).');
+      throw err;
+    } finally { clearTimeout(t); }
+  }
+
+  /* =========================================================================
+     חלונית השיגור (#dispatch-hub-modal)
+     ========================================================================= */
+  const Hub = {
+    action: null,
+    open(action, title, icon) {
+      this.action = action;
+      $('#hub-title').textContent = title;
+      $('#hub-icon').textContent = icon;
+      $('#hub-errors').hidden = true;
+      $('#hub-confirm').hidden = true;
+      $('#hub-primary-actions').innerHTML = '';
+      const st = getDispatchSettings();
+      $('#input-endpointUrl').value = st.url || '';
+      $('#input-endpointToken').value = st.token || '';
+      $('#dispatch-hub-modal').hidden = false;
+      document.body.style.overflow = 'hidden';
+      this.status('info', 'מכין את המסמך החתום…', true);
+      this.loadImage();
+    },
+    close() {
+      $('#dispatch-hub-modal').hidden = true;
+      document.body.style.overflow = '';
+      this.action = null;
+    },
+    status(kind, text, busy = false) {
+      const el = $('#hub-status');
+      el.className = `hub-status ${kind}`;
+      el.innerHTML = `${busy ? '<span class="spinner"></span>' : `<span>${{ ok: '✅', warn: '⚠️', error: '⛔', info: 'ℹ️' }[kind] || ''}</span>`}<span class="flex-1 min-w-0">${text}</span>`;
+    },
+    errors(errs) {
+      const el = $('#hub-errors');
+      el.hidden = !errs.length;
+      el.innerHTML = errs.length ? errorsHtml(errs) : '';
+    },
+    actions(html) { $('#hub-primary-actions').innerHTML = html; },
+    loadImage() {
+      const img = $('#dispatch-preview-img'), ph = $('#hub-img-placeholder');
+      if (pdfCache.assets && pdfCache.version === stateVersion) {
+        img.src = pdfCache.assets.imageUrl; img.hidden = false; ph.hidden = true; return;
+      }
+      img.hidden = true; ph.hidden = false; ph.textContent = 'מרנדר את מסמך ה-A4 החתום…';
+      generatePdfAssets().then(a => {
+        if ($('#dispatch-hub-modal').hidden) return;
+        img.src = a.imageUrl; img.hidden = false; ph.hidden = true;
+      }).catch(err => { ph.textContent = `לא ניתן היה לרנדר את המסמך: ${err.message}`; });
+    }
+  };
+
+  const ACTION_META = {
+    'cloud-draft': ['יצירת טיוטה ב-Gmail עם PDF מצורף', '📥'],
+    'cloud-send': ['שליחה ישירה לכל המכותבים + PDF', '⚡'],
+    'share': ['שיתוף ה-PDF החתום', '📱'],
+    'mailto': ['פתיחת אפליקציית המייל', '✉️'],
+    'intent': ['פתיחת Gmail באנדרואיד', '🤖'],
+    'gmail-web': ['Gmail Web', '💻'],
+    'download-pdf': ['הורדת PDF חתום', '⬇️'],
+    'download-word': ['הורדת קובץ Word', '📄'],
+    'copy-all': ['העתקת המכתב', '📋'],
+    'print': ['הדפסת המכתב', '🖨️']
+  };
+
+  function handleDispatch(action, ev) {
+    const [title, icon] = ACTION_META[action] || ['חלונית שיגור', '📨'];
+    const d = buildDispatchData();
+    const errs = validate(d.s);
+    const blocking = blockingErrors(errs);
+
+    // העתקה מיידית ללוח בתוך מחוות המשתמש
+    if (action === 'share') copyKind('recipients', { silent: true });
+    else copyKind('letter', { silent: true });
+
+    Hub.open(action, title, icon);
+    Hub.errors(errs);
+
+    const needsValid = ['cloud-draft', 'cloud-send', 'share', 'mailto', 'intent', 'gmail-web'];
+    if (blocking.length && needsValid.includes(action)) {
+      if (ev && ev.currentTarget && ev.currentTarget.tagName === 'A') ev.preventDefault();
+      Hub.status('error', 'לא ניתן לשגר לפני השלמת הפרטים החסרים (ראו למטה). המכתב הועתק ללוח.');
+      return;
+    }
+
+    switch (action) {
+      case 'cloud-draft': return runCloud('draft');
+      case 'cloud-send': return confirmSend(d);
+      case 'share': return runShare(d);
+      case 'mailto':
+        Hub.status('ok', 'אפליקציית המייל נפתחת עם הנמענים, הנושא וההקדמה. <b>נוסח המכתב המלא הועתק ללוח</b> – הדביקו אותו בגוף המייל וצרפו את ה-PDF (הורדה בכפתור למטה).');
+        return;
+      case 'intent':
+        Hub.status('ok', 'Gmail לאנדרואיד נפתח. <b>נוסח המכתב המלא הועתק ללוח</b> – הדביקו אותו וצרפו את ה-PDF שהורדתם.');
+        return;
+      case 'gmail-web':
+        Hub.status('ok', 'חלון כתיבה של Gmail נפתח בלשונית חדשה עם כל הנמענים והנוסח. צרפו את קובץ ה-PDF (כפתור "הורד PDF" למטה).');
+        return;
+      case 'download-pdf': return runDownloadPdf();
+      case 'download-word': return runDownloadWord();
+      case 'copy-all':
+        Hub.status('ok', 'ההקדמה והמכתב המעוצב המלא הועתקו ללוח ✓');
+        return;
+      case 'print':
+        Hub.close(); setTimeout(() => window.print(), 50);
+        return;
+    }
+  }
+
+  function confirmSend(d) {
+    const endpoint = resolveEndpoint();
+    if (!endpoint) return noEndpoint();
+    Hub.status('warn', 'פעולה זו תשלח את המכתב <b>באופן מיידי וסופי</b>. נא לאשר.');
+    $('#hub-confirm-text').innerHTML = `המכתב יישלח עם קובץ PDF חתום אל <b>${d.m.rec.to.length}</b> נמענים ישירים ו-<b>${d.m.rec.cc.length}</b> נמענים בהעתק:<br><span class="ltr break-all text-right block text-[12px] mt-1" dir="ltr">${escapeHtml([...d.m.rec.to, ...d.m.rec.cc].join(', '))}</span>`;
+    $('#hub-confirm').hidden = false;
+    generatePdfAssets().catch(() => {});
+  }
+
+  function noEndpoint() {
+    Hub.status('warn', 'טרם הוגדר שרת שיגור בענן. הדביקו את כתובת ה-Google Apps Script שלכם בהגדרות למטה, או השתמשו בערוצים החלופיים (שיתוף / אפליקציית מייל / הורדת PDF). המכתב הועתק ללוח.');
+    $('#hub-settings').open = true;
+  }
+
+  async function runCloud(mode) {
+    const endpoint = resolveEndpoint();
+    if (!endpoint) return noEndpoint();
+    try {
+      Hub.status('info', 'מפיק קובץ PDF חתום…', true);
+      const assets = await generatePdfAssets();
+      const d = buildDispatchData();
+      Hub.status('info', mode === 'send' ? 'שולח את המייל לכל המכותבים…' : 'יוצר טיוטה מוכנה ב-Gmail…', true);
+      const st = getDispatchSettings();
+      const payload = {
+        mode, to: d.m.rec.to.join(','), cc: d.m.rec.cc.join(','),
+        subject: d.m.subject, textBody: d.fullText, htmlBody: buildEmailHtml(d.m),
+        pdfBase64: assets.base64, filename: assets.filename,
+        replyTo: d.s.employeeEmail || '', token: st.token || ''
+      };
+      await postToEndpoint(endpoint, payload);
+      if (mode === 'send') {
+        Hub.status('ok', `המכתב נשלח בהצלחה ל-${d.m.rec.to.length + d.m.rec.cc.length} כתובות, כולל קובץ ה-PDF החתום. מומלץ לשמור עותק (הורד PDF).`);
+        showToast('המכתב נשלח בהצלחה ✓', 'ok');
+      } else {
+        Hub.status('ok', 'הטיוטה נוצרה בתיבת ה-Gmail שלכם (תיקיית "טיוטות") עם כל הנמענים, הנושא, הנוסח וה-PDF המצורף. בדקו ושלחו משם.');
+        Hub.actions('<a class="btn btn-navy btn-sm" href="https://mail.google.com/mail/u/0/#drafts" target="_blank" rel="noopener">פתח את תיקיית הטיוטות ב-Gmail</a>');
+        showToast('הטיוטה נוצרה ב-Gmail ✓', 'ok');
+      }
+    } catch (err) {
+      Hub.status('error', `השיגור בענן נכשל: ${escapeHtml(err.message)}<br>ניתן להשתמש בערוצים החלופיים למטה – המכתב כבר הועתק ללוח.`);
+      $('#hub-settings').open = true;
+    }
+  }
+
+  function shareWithFile(d, file) {
+    const shareData = { files: [file], title: d.m.subject, text: `${d.intro}\n\n${d.recipientsText}` };
+    if (!(navigator.canShare && navigator.canShare({ files: [file] }))) return false;
+    navigator.share(shareData).then(() => {
+      Hub.status('ok', 'השיתוף הושלם. רשימת הנמענים הועתקה ללוח – הדביקו אותה בשדה "אל" באפליקציית המייל.');
+    }).catch(err => {
+      if (err && err.name === 'AbortError') Hub.status('info', 'השיתוף בוטל.');
+      else Hub.status('warn', `השיתוף נכשל (${escapeHtml(err.message || '')}). נסו "הורד PDF" או לחיצה ארוכה על התמונה.`);
+    });
+    return true;
+  }
+
+  function runShare(d) {
+    const fresh = cachedPdfFile && pdfCache.version === stateVersion;
+    if (fresh && navigator.share) {
+      if (shareWithFile(d, cachedPdfFile)) { Hub.status('info', 'נפתח תפריט השיתוף של המכשיר… רשימת הנמענים הועתקה ללוח.', true); return; }
+    }
+    if (!navigator.share) {
+      Hub.status('warn', 'הדפדפן אינו תומך בשיתוף קבצים. השתמשו ב"הורד PDF", בלחיצה ארוכה על התמונה, או באפליקציית המייל. רשימת הנמענים הועתקה ללוח.');
+      generatePdfAssets().catch(() => {});
+      return;
+    }
+    Hub.status('info', 'מכין את קובץ ה-PDF החתום לשיתוף…', true);
+    generatePdfAssets().then(() => {
+      Hub.status('ok', 'קובץ ה-PDF מוכן. לחצו על "שתף עכשיו" כדי לפתוח את תפריט השיתוף.');
+      Hub.actions('<button type="button" class="btn btn-navy" id="hub-share-now">📱 שתף עכשיו</button>');
+      $('#hub-share-now').addEventListener('click', () => {
+        const dd = buildDispatchData();
+        copyKind('recipients', { silent: true });
+        if (!shareWithFile(dd, cachedPdfFile)) Hub.status('warn', 'המכשיר אינו מאפשר שיתוף קבצי PDF. השתמשו ב"הורד PDF" או בלחיצה ארוכה על התמונה.');
+      });
+    }).catch(err => Hub.status('error', `הפקת ה-PDF נכשלה: ${escapeHtml(err.message)}`));
+  }
+
+  async function runDownloadPdf() {
+    try {
+      Hub.status('info', 'מפיק קובץ PDF חתום…', true);
+      const a = await generatePdfAssets();
+      triggerDownload(a.blob, a.filename);
+      Hub.status('ok', `הקובץ ${escapeHtml(a.filename)} הורד (${a.pages} עמודים). אם ההורדה נחסמה (למשל בתוך WhatsApp), פתחו את הקישור בדפדפן Chrome/Safari או בצעו לחיצה ארוכה על התמונה.`);
+      Hub.actions(`<a class="btn btn-outline btn-sm" href="${URL.createObjectURL(a.blob)}" target="_blank" rel="noopener">פתח את ה-PDF בלשונית חדשה</a>`);
+    } catch (err) { Hub.status('error', `הפקת ה-PDF נכשלה: ${escapeHtml(err.message)}`); }
+  }
+  function runDownloadWord() {
+    try {
+      const w = buildWordDocument();
+      triggerDownload(w.blob, w.filename);
+      Hub.status('ok', `קובץ ה-Word ${escapeHtml(w.filename)} הורד, כולל החתימה. ניתן לפתוח ולערוך ב-Microsoft Word.`);
+    } catch (err) { Hub.status('error', `יצירת קובץ ה-Word נכשלה: ${escapeHtml(err.message)}`); }
+  }
+
+  /* =========================================================================
+     Toast
+     ========================================================================= */
+  let toastTimer;
+  function showToast(msg, kind = 'info') {
+    const t = $('#toast-notification'), body = $('#toast-body');
+    $('#toast-message').textContent = msg;
+    body.className = `flex items-start gap-3 rounded-xl px-4 py-3 shadow-lg text-sm font-medium text-white ${{ ok: 'bg-green-700', warn: 'bg-amber-600', error: 'bg-crimson-700', info: 'bg-navy-900' }[kind] || 'bg-navy-900'}`;
+    t.classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.add('hidden'), 4200);
+  }
+
+  /* =========================================================================
+     איפוס / דוגמה
+     ========================================================================= */
+  function resetForm({ keepStorage = false } = {}) {
+    $$('[id^="input-"]').forEach(el => { if (el.id !== 'input-endpointUrl' && el.id !== 'input-endpointToken') el.value = ''; });
+    $$('input[type="checkbox"][id^="chk-"]').forEach(el => { el.checked = false; });
+    $$('input[type="checkbox"][id^="rcp-"]').forEach(el => { el.checked = true; });
+    $('#chk-disclaimerConfirmed').checked = true;
+    $('#input-letterDate').value = todayIso();
+    customHourLogs = [];
+    renderCustomLogs();
+    clearSignature();
+    if (!keepStorage) storage.remove(STORAGE_KEY);
+  }
+  function fillDemo() {
+    resetForm({ keepStorage: true });
+    Object.entries(DEMO_DATA.inputs).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
+    DEMO_DATA.checks.forEach(id => { const el = document.getElementById(`chk-${id}`); if (el) el.checked = true; });
+    customHourLogs = [...DEMO_DATA.customHourLogs];
+    renderCustomLogs();
+    drawDemoSignature();
+    onStateChanged();
+    showToast('נתוני דוגמה מולאו – יש להחליפם בפרטים האמיתיים שלכם לפני שליחה.', 'warn');
+  }
+
+  /* =========================================================================
+     אירועים
+     ========================================================================= */
+  function bindEvents() {
+    $$('.step-btn').forEach(b => b.addEventListener('click', () => setStep(Number(b.dataset.step))));
+    $('#btn-prev').addEventListener('click', () => setStep(currentStep - 1));
+    $('#btn-next').addEventListener('click', ev => { if (currentStep === 5) handleDispatch('cloud-draft', ev); else setStep(currentStep + 1); });
+
+    // שינוי בכל שדה / תיבת סימון
+    $('#wizard').addEventListener('input', e => {
+      const el = e.target;
+      if (el.dataset.logIndex !== undefined) { customHourLogs[Number(el.dataset.logIndex)] = el.value; }
+      // הקלדת פירוט מסמנת את הסעיף
+      const card = el.closest('.item-card');
+      if (card && el.type === 'text' && el.value.trim()) { const cb = card.querySelector('input[type="checkbox"]'); if (cb) cb.checked = true; }
+      if (el.id === 'input-idNumber') {
+        el.value = el.value.replace(/\D/g, '').slice(0, 9);
+        const ok = !el.value || isValidIsraeliId(el.value);
+        el.classList.toggle('is-invalid', el.value.length === 9 && !ok);
+        $('#hint-idNumber').textContent = el.value.length === 9 ? (ok ? '✓ מספר תקין' : '⚠ ספרת הביקורת אינה תואמת – בדקו את המספר') : '9 ספרות כולל ספרת ביקורת';
+      }
+      if (el.id === 'input-fullName') el.classList.remove('is-invalid');
+      onStateChanged();
+    });
+    $('#wizard').addEventListener('change', e => { if (e.target.matches('input[type="checkbox"], select, input[type="date"]')) onStateChanged(); });
+
+    $('#wizard').addEventListener('click', e => {
+      const rm = e.target.closest('[data-log-remove]');
+      if (rm) { customHourLogs.splice(Number(rm.dataset.logRemove), 1); renderCustomLogs(); onStateChanged(); return; }
+      if (e.target.closest('#btn-add-log')) {
+        customHourLogs.push(''); renderCustomLogs();
+        const inputs = $$('#custom-logs input'); inputs[inputs.length - 1].focus();
+        onStateChanged(); return;
+      }
+      const go = e.target.closest('[data-goto-step]');
+      if (go) { setStep(Number(go.dataset.gotoStep)); return; }
+      const act = e.target.closest('[data-action]');
+      if (act) handleDispatch(act.dataset.action, { currentTarget: act, preventDefault: () => e.preventDefault() });
+    });
+
+    $('#btn-clear-signature').addEventListener('click', () => { clearSignature(); onStateChanged(); });
+    $('#btn-fill-demo').addEventListener('click', fillDemo);
+    // אישור בלחיצה שנייה (חלונות confirm() חסומים בחלק מהדפדפנים המוטמעים)
+    let resetArmedTimer = null;
+    $('#btn-reset-form').addEventListener('click', e => {
+      const btn = e.currentTarget;
+      if (!resetArmedTimer) {
+        btn.textContent = 'לחצו שוב לאישור';
+        showToast('לחיצה נוספת על "איפוס" תמחק את כל הטופס ואת הטיוטה השמורה במכשיר.', 'warn');
+        resetArmedTimer = setTimeout(() => { resetArmedTimer = null; btn.textContent = 'איפוס'; }, 4000);
+        return;
+      }
+      clearTimeout(resetArmedTimer); resetArmedTimer = null; btn.textContent = 'איפוס';
+      resetForm(); onStateChanged(); setStep(1);
+      showToast('הטופס אופס והטיוטה נמחקה.', 'info');
+    });
+
+    // חלונית השיגור
+    const hub = $('#dispatch-hub-modal');
+    hub.addEventListener('click', e => {
+      if (e.target.closest('[data-hub-close]')) { Hub.close(); return; }
+      const cp = e.target.closest('[data-copy]');
+      if (cp) { copyKind(cp.dataset.copy); return; }
+      const go = e.target.closest('[data-goto-step]');
+      if (go) { Hub.close(); setStep(Number(go.dataset.gotoStep)); return; }
+      const ha = e.target.closest('[data-hub-action]');
+      if (ha) { handleDispatch(ha.dataset.hubAction, { currentTarget: ha, preventDefault: () => e.preventDefault() }); return; }
+      const link = e.target.closest('#hub-link-mailto, #hub-link-intent, #hub-link-gmail-web');
+      if (link) {
+        const action = { 'hub-link-mailto': 'mailto', 'hub-link-intent': 'intent', 'hub-link-gmail-web': 'gmail-web' }[link.id];
+        handleDispatch(action, { currentTarget: link, preventDefault: () => e.preventDefault() });
+      }
+    });
+    $('#hub-confirm-send').addEventListener('click', () => { $('#hub-confirm').hidden = true; runCloud('send'); });
+    $('#hub-confirm-cancel').addEventListener('click', () => { $('#hub-confirm').hidden = true; Hub.status('info', 'השליחה בוטלה. לא נשלח דבר.'); });
+    $('#btn-save-endpoint').addEventListener('click', () => {
+      const url = $('#input-endpointUrl').value.trim();
+      if (url && !/^https:\/\//.test(url) && !url.startsWith('/')) { showToast('כתובת השרת חייבת להתחיל ב-https://', 'warn'); return; }
+      storage.set(DISPATCH_SETTINGS_KEY, { url, token: $('#input-endpointToken').value.trim() });
+      showToast('הגדרות השיגור נשמרו במכשיר ✓', 'ok');
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !hub.hidden) Hub.close(); });
+
+    $('#toast-close').addEventListener('click', () => $('#toast-notification').classList.add('hidden'));
+  }
+
+  /* =========================================================================
+     אתחול
+     ========================================================================= */
+  document.addEventListener('DOMContentLoaded', async () => {
+    buildDynamicUI();
+    initSignaturePad();
+    bindEvents();
+    const restored = await restoreDraft();
+    if (!$('#input-letterDate').value) $('#input-letterDate').value = todayIso();
+    renderCustomLogs();
+    refreshCardStates();
+    updateRecipientSummary();
+    setStep(1);
+    if (restored) showToast('הטיוטה השמורה שוחזרה.', 'info');
+  });
+  </script>
+</body>
+</html>

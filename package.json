@@ -1,0 +1,16 @@
+{
+  "name": "poalim-legal-notice-generator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "מערכת עזר טכנולוגית לעובדי בנק הפועלים – מחולל מכתבי התרעה משפטיים אישיים",
+  "scripts": {
+    "start": "npx --yes serve -l 3000 .",
+    "test": "node tests/acceptance.cjs"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.16"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
